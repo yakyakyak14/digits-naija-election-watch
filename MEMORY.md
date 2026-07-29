@@ -21,7 +21,8 @@ DIGITs Nigeria Election Watch is a citizen-powered transparency platform empower
 ## Current State
 - Phase 1 & 2 completed (Nigerian theme, auth system, roles & RLS, control center scaffold).
 - Features built: LiveKit 1–6 split screen video grid, DIGEO training & certification, real-time i-Witness camera recorder with Google Places API, 10 platform enhancements, and floating footer (`Built by SirHope of WYN-Tech.`).
-- Vercel Deployment Fix: Resolved white blank screen issue by creating client mounting entry point `src/main.tsx` in `index.html` and refactoring routes to client-side Supabase SDK execution.
-- Build & Typecheck: `bun run build` (1.18s, 0 errors) and `bunx tsc --noEmit` (0 errors).
+- Auth Page Performance & UI Overhaul: Isolated `SignInForm` and `SignUpForm` subcomponents for instant 0ms typing response without parent re-renders. Added interactive particle canvas background with mouse proximity connections and ambient emerald/gold orbs. Enhanced Google OAuth with `prompt: "select_account"`.
+- Vercel Deployment Fix: Resolved white blank screen & peer dependency issues (`.npmrc`, `src/main.tsx`).
+- Build & Typecheck: `bun run build` (2.63s, 0 errors) and `bunx tsc --noEmit` (0 errors).
 - Remote repository updated and live at: https://github.com/yakyakyak14/digits-naija-election-watch.git.
 
