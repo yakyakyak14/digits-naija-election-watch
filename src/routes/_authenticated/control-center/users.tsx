@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -18,33 +17,39 @@ export const Route = createFileRoute("/_authenticated/control-center/users")({
 });
 
 function UsersPage() {
-  const fetchRoles = useServerFn(getMyRoles);
-  const fetchUsers = useServerFn(listUsersWithRoles);
-  const grantFn = useServerFn(grantRole);
-  const revokeFn = useServerFn(revokeRole);
   const qc = useQueryClient();
 
-  const { data: myRoles } = useSuspenseQuery({ queryKey: ["my-roles"], queryFn: () => fetchRoles() });
+  const { data: myRoles = ["viewer"] } = useSuspenseQuery({
+    queryKey: ["my-roles"],
+    queryFn: () => getMyRoles(),
+  });
   const isSuper = myRoles.includes("super_admin");
   const isAdmin = myRoles.includes("admin");
   const canManage = isSuper || isAdmin;
 
   const { data: users, error } = useSuspenseQuery({
     queryKey: ["cc-users"],
-    queryFn: () => canManage ? fetchUsers() : Promise.resolve([]),
+    queryFn: () => canManage ? listUsersWithRoles() : Promise.resolve([]),
   });
 
   const [q, setQ] = useState("");
   const [selectedRole, setSelectedRole] = useState<Record<string, AppRole>>({});
 
   const grantM = useMutation({
-    mutationFn: (v: { userId: string; role: AppRole }) => grantFn({ data: v }),
-    onSuccess: () => { toast.success("Role granted"); qc.invalidateQueries({ queryKey: ["cc-users"] }); },
+    mutationFn: (v: { userId: string; role: AppRole }) => grantRole(v),
+    onSuccess: () => {
+      toast.success("Role granted");
+      qc.invalidateQueries({ queryKey: ["cc-users"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
+
   const revokeM = useMutation({
-    mutationFn: (v: { userId: string; role: AppRole }) => revokeFn({ data: v }),
-    onSuccess: () => { toast.success("Role revoked"); qc.invalidateQueries({ queryKey: ["cc-users"] }); },
+    mutationFn: (v: { userId: string; role: AppRole }) => revokeRole(v),
+    onSuccess: () => {
+      toast.success("Role revoked");
+      qc.invalidateQueries({ queryKey: ["cc-users"] });
+    },
     onError: (e: Error) => toast.error(e.message),
   });
 

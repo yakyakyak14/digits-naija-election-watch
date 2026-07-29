@@ -1,6 +1,5 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { ControlCenterSidebar } from "@/components/control-center/ControlCenterSidebar";
 import { getMyRoles } from "@/lib/roles.functions";
@@ -16,10 +15,9 @@ export const Route = createFileRoute("/_authenticated/control-center")({
 });
 
 function ControlCenterLayout() {
-  const fetchRoles = useServerFn(getMyRoles);
-  const { data: myRoles } = useSuspenseQuery({
+  const { data: myRoles = ["viewer"] } = useSuspenseQuery({
     queryKey: ["my-roles"],
-    queryFn: () => fetchRoles(),
+    queryFn: () => getMyRoles(),
   });
   const navigate = useNavigate();
   const qc = useQueryClient();

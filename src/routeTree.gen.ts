@@ -9,53 +9,32 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as LiveRouteImport } from './routes/live'
-import { Route as HowItWorksRouteImport } from './routes/how-it-works'
-import { Route as GetInvolvedRouteImport } from './routes/get-involved'
-import { Route as FeaturesRouteImport } from './routes/features'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as FeaturesRouteImport } from './routes/features'
+import { Route as GetInvolvedRouteImport } from './routes/get-involved'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as LiveRouteImport } from './routes/live'
 import { Route as AuthenticatedControlCenterRouteImport } from './routes/_authenticated/control-center'
 import { Route as AuthenticatedControlCenterIndexRouteImport } from './routes/_authenticated/control-center/index'
-import { Route as AuthenticatedControlCenterUsersRouteImport } from './routes/_authenticated/control-center/users'
-import { Route as AuthenticatedControlCenterTrainingRouteImport } from './routes/_authenticated/control-center/training'
-import { Route as AuthenticatedControlCenterSettingsRouteImport } from './routes/_authenticated/control-center/settings'
-import { Route as AuthenticatedControlCenterReportsRouteImport } from './routes/_authenticated/control-center/reports'
-import { Route as AuthenticatedControlCenterPublicRouteImport } from './routes/_authenticated/control-center/public'
-import { Route as AuthenticatedControlCenterObserversRouteImport } from './routes/_authenticated/control-center/observers'
 import { Route as AuthenticatedControlCenterLiveRouteImport } from './routes/_authenticated/control-center/live'
+import { Route as AuthenticatedControlCenterObserversRouteImport } from './routes/_authenticated/control-center/observers'
+import { Route as AuthenticatedControlCenterPublicRouteImport } from './routes/_authenticated/control-center/public'
+import { Route as AuthenticatedControlCenterReportsRouteImport } from './routes/_authenticated/control-center/reports'
+import { Route as AuthenticatedControlCenterSettingsRouteImport } from './routes/_authenticated/control-center/settings'
+import { Route as AuthenticatedControlCenterTrainingRouteImport } from './routes/_authenticated/control-center/training'
+import { Route as AuthenticatedControlCenterUsersRouteImport } from './routes/_authenticated/control-center/users'
 
-const LiveRoute = LiveRouteImport.update({
-  id: '/live',
-  path: '/live',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HowItWorksRoute = HowItWorksRouteImport.update({
-  id: '/how-it-works',
-  path: '/how-it-works',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GetInvolvedRoute = GetInvolvedRouteImport.update({
-  id: '/get-involved',
-  path: '/get-involved',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FeaturesRoute = FeaturesRouteImport.update({
-  id: '/features',
-  path: '/features',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -63,13 +42,34 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeaturesRoute = FeaturesRouteImport.update({
+  id: '/features',
+  path: '/features',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GetInvolvedRoute = GetInvolvedRouteImport.update({
+  id: '/get-involved',
+  path: '/get-involved',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveRoute = LiveRouteImport.update({
+  id: '/live',
+  path: '/live',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedControlCenterRoute =
@@ -84,34 +84,10 @@ const AuthenticatedControlCenterIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedControlCenterRoute,
   } as any)
-const AuthenticatedControlCenterUsersRoute =
-  AuthenticatedControlCenterUsersRouteImport.update({
-    id: '/users',
-    path: '/users',
-    getParentRoute: () => AuthenticatedControlCenterRoute,
-  } as any)
-const AuthenticatedControlCenterTrainingRoute =
-  AuthenticatedControlCenterTrainingRouteImport.update({
-    id: '/training',
-    path: '/training',
-    getParentRoute: () => AuthenticatedControlCenterRoute,
-  } as any)
-const AuthenticatedControlCenterSettingsRoute =
-  AuthenticatedControlCenterSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedControlCenterRoute,
-  } as any)
-const AuthenticatedControlCenterReportsRoute =
-  AuthenticatedControlCenterReportsRouteImport.update({
-    id: '/reports',
-    path: '/reports',
-    getParentRoute: () => AuthenticatedControlCenterRoute,
-  } as any)
-const AuthenticatedControlCenterPublicRoute =
-  AuthenticatedControlCenterPublicRouteImport.update({
-    id: '/public',
-    path: '/public',
+const AuthenticatedControlCenterLiveRoute =
+  AuthenticatedControlCenterLiveRouteImport.update({
+    id: '/live',
+    path: '/live',
     getParentRoute: () => AuthenticatedControlCenterRoute,
   } as any)
 const AuthenticatedControlCenterObserversRoute =
@@ -120,10 +96,34 @@ const AuthenticatedControlCenterObserversRoute =
     path: '/observers',
     getParentRoute: () => AuthenticatedControlCenterRoute,
   } as any)
-const AuthenticatedControlCenterLiveRoute =
-  AuthenticatedControlCenterLiveRouteImport.update({
-    id: '/live',
-    path: '/live',
+const AuthenticatedControlCenterPublicRoute =
+  AuthenticatedControlCenterPublicRouteImport.update({
+    id: '/public',
+    path: '/public',
+    getParentRoute: () => AuthenticatedControlCenterRoute,
+  } as any)
+const AuthenticatedControlCenterReportsRoute =
+  AuthenticatedControlCenterReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedControlCenterRoute,
+  } as any)
+const AuthenticatedControlCenterSettingsRoute =
+  AuthenticatedControlCenterSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedControlCenterRoute,
+  } as any)
+const AuthenticatedControlCenterTrainingRoute =
+  AuthenticatedControlCenterTrainingRouteImport.update({
+    id: '/training',
+    path: '/training',
+    getParentRoute: () => AuthenticatedControlCenterRoute,
+  } as any)
+const AuthenticatedControlCenterUsersRoute =
+  AuthenticatedControlCenterUsersRouteImport.update({
+    id: '/users',
+    path: '/users',
     getParentRoute: () => AuthenticatedControlCenterRoute,
   } as any)
 
@@ -259,53 +259,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/live': {
-      id: '/live'
-      path: '/live'
-      fullPath: '/live'
-      preLoaderRoute: typeof LiveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/how-it-works': {
-      id: '/how-it-works'
-      path: '/how-it-works'
-      fullPath: '/how-it-works'
-      preLoaderRoute: typeof HowItWorksRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/get-involved': {
-      id: '/get-involved'
-      path: '/get-involved'
-      fullPath: '/get-involved'
-      preLoaderRoute: typeof GetInvolvedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/features': {
-      id: '/features'
-      path: '/features'
-      fullPath: '/features'
-      preLoaderRoute: typeof FeaturesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -315,11 +273,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/features': {
+      id: '/features'
+      path: '/features'
+      fullPath: '/features'
+      preLoaderRoute: typeof FeaturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/get-involved': {
+      id: '/get-involved'
+      path: '/get-involved'
+      fullPath: '/get-involved'
+      preLoaderRoute: typeof GetInvolvedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live': {
+      id: '/live'
+      path: '/live'
+      fullPath: '/live'
+      preLoaderRoute: typeof LiveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/control-center': {
@@ -336,39 +336,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedControlCenterIndexRouteImport
       parentRoute: typeof AuthenticatedControlCenterRoute
     }
-    '/_authenticated/control-center/users': {
-      id: '/_authenticated/control-center/users'
-      path: '/users'
-      fullPath: '/control-center/users'
-      preLoaderRoute: typeof AuthenticatedControlCenterUsersRouteImport
-      parentRoute: typeof AuthenticatedControlCenterRoute
-    }
-    '/_authenticated/control-center/training': {
-      id: '/_authenticated/control-center/training'
-      path: '/training'
-      fullPath: '/control-center/training'
-      preLoaderRoute: typeof AuthenticatedControlCenterTrainingRouteImport
-      parentRoute: typeof AuthenticatedControlCenterRoute
-    }
-    '/_authenticated/control-center/settings': {
-      id: '/_authenticated/control-center/settings'
-      path: '/settings'
-      fullPath: '/control-center/settings'
-      preLoaderRoute: typeof AuthenticatedControlCenterSettingsRouteImport
-      parentRoute: typeof AuthenticatedControlCenterRoute
-    }
-    '/_authenticated/control-center/reports': {
-      id: '/_authenticated/control-center/reports'
-      path: '/reports'
-      fullPath: '/control-center/reports'
-      preLoaderRoute: typeof AuthenticatedControlCenterReportsRouteImport
-      parentRoute: typeof AuthenticatedControlCenterRoute
-    }
-    '/_authenticated/control-center/public': {
-      id: '/_authenticated/control-center/public'
-      path: '/public'
-      fullPath: '/control-center/public'
-      preLoaderRoute: typeof AuthenticatedControlCenterPublicRouteImport
+    '/_authenticated/control-center/live': {
+      id: '/_authenticated/control-center/live'
+      path: '/live'
+      fullPath: '/control-center/live'
+      preLoaderRoute: typeof AuthenticatedControlCenterLiveRouteImport
       parentRoute: typeof AuthenticatedControlCenterRoute
     }
     '/_authenticated/control-center/observers': {
@@ -378,11 +350,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedControlCenterObserversRouteImport
       parentRoute: typeof AuthenticatedControlCenterRoute
     }
-    '/_authenticated/control-center/live': {
-      id: '/_authenticated/control-center/live'
-      path: '/live'
-      fullPath: '/control-center/live'
-      preLoaderRoute: typeof AuthenticatedControlCenterLiveRouteImport
+    '/_authenticated/control-center/public': {
+      id: '/_authenticated/control-center/public'
+      path: '/public'
+      fullPath: '/control-center/public'
+      preLoaderRoute: typeof AuthenticatedControlCenterPublicRouteImport
+      parentRoute: typeof AuthenticatedControlCenterRoute
+    }
+    '/_authenticated/control-center/reports': {
+      id: '/_authenticated/control-center/reports'
+      path: '/reports'
+      fullPath: '/control-center/reports'
+      preLoaderRoute: typeof AuthenticatedControlCenterReportsRouteImport
+      parentRoute: typeof AuthenticatedControlCenterRoute
+    }
+    '/_authenticated/control-center/settings': {
+      id: '/_authenticated/control-center/settings'
+      path: '/settings'
+      fullPath: '/control-center/settings'
+      preLoaderRoute: typeof AuthenticatedControlCenterSettingsRouteImport
+      parentRoute: typeof AuthenticatedControlCenterRoute
+    }
+    '/_authenticated/control-center/training': {
+      id: '/_authenticated/control-center/training'
+      path: '/training'
+      fullPath: '/control-center/training'
+      preLoaderRoute: typeof AuthenticatedControlCenterTrainingRouteImport
+      parentRoute: typeof AuthenticatedControlCenterRoute
+    }
+    '/_authenticated/control-center/users': {
+      id: '/_authenticated/control-center/users'
+      path: '/users'
+      fullPath: '/control-center/users'
+      preLoaderRoute: typeof AuthenticatedControlCenterUsersRouteImport
       parentRoute: typeof AuthenticatedControlCenterRoute
     }
   }
