@@ -1,28 +1,119 @@
-# DIGITs Nigeria Election Watch — Global Memory & Project State
+# DIGITs Election Watch — project state
 
-## Project Overview
-DIGITs Nigeria Election Watch is a citizen-powered transparency platform empowering Nigerian democracy through real-time election monitoring, trained election observers (DIGEO), live video streaming, and verified i-Witness incident reporting.
+## What this is
 
-## Key Technical Specifications & Stack
-- **Framework**: TanStack Start / React 19 / Vite / TypeScript
-- **Styling**: Tailwind CSS v4 + Vanilla CSS + Sora & Inter typography + Nigerian Flag Gradient & OKLCH Theme (`#008751`, gold, deep green)
-- **Database & Auth**: Supabase (PostgreSQL, RLS, Auth via Email & Google OAuth)
-- **Super Admin Bootstrap**: `3bd31686-f95b-4a81-b690-ed7571be0d6e` (`yakyakyak1414@gmail.com`)
-- **Real-Time Video**: LiveKit streaming integration with 1–6 split screen public grid and Control Center broadcast controller
-- **i-Witness Reporting**: Real-time camera & mic recorder (max 2 mins), Google Places API location autocomplete, mandatory geolocation, profile NIN validation, Supabase Storage persistence, and 24h user history auto-expiry
-- **DIGEO Observer System**: Interactive training modules, electoral guidelines, practice quizzes, certificate generator, and badge verification
+A citizen election-observation platform for Nigeria: live observer feeds curated by
+a Command Center, real-time i-Witness citizen evidence, and accredited DIGEO
+observer training. Watching, reading and training need no account; only commenting
+and submitting evidence require sign-in.
 
-## Branding & Compliance Rules
-- No Lovable branding, components, logos, or telemetry.
-- Brand logo: Coat of Arms shield with DIGITs Nigeria Election Watch typography.
-- Footer requirement: `Built by SirHope of WYN-Tech.` with floating CSS keyframe animation for **SirHope** and **WYN-Tech**.
-- `.env` must always be listed in `.gitignore`.
+## Deployment shape (important)
 
-## Current State
-- Phase 1 & 2 completed (Nigerian theme, auth system, roles & RLS, control center scaffold).
-- Features built: LiveKit 1–6 split screen video grid, DIGEO training & certification, real-time i-Witness camera recorder with Google Places API, 10 platform enhancements, and floating footer (`Built by SirHope of WYN-Tech.`).
-- Auth Page Performance & UI Overhaul: Isolated `SignInForm` and `SignUpForm` subcomponents for instant 0ms typing response without parent re-renders. Added interactive particle canvas background with mouse proximity connections and ambient emerald/gold orbs. Enhanced Google OAuth with `prompt: "select_account"`.
-- Vercel Deployment Fix: Resolved white blank screen & peer dependency issues (`.npmrc`, `src/main.tsx`).
-- Build & Typecheck: `bun run build` (2.63s, 0 errors) and `bunx tsc --noEmit` (0 errors).
-- Remote repository updated and live at: https://github.com/yakyakyak14/digits-naija-election-watch.git.
+The app builds as a **client-rendered SPA** (`vite build` → `dist/`, SPA rewrites in
+`vercel.json`). There is **no Node server** and the TanStack Start vite plugin is
+deliberately not enabled — so `createServerFn` cannot be used. Anything that needs a
+secret lives in a **Supabase Edge Function**:
 
+- `supabase/functions/places` — Google Places proxy (`GOOGLE_PLACES_API`)
+- `supabase/functions/livekit-token` — LiveKit token minting (`LIVEKIT_*`)
+
+Deploy them with `npm run fn:deploy`. Do not reintroduce `*.functions.ts` server
+functions unless the deployment model changes.
+
+## Stack
+
+- TanStack Router + React 19 + Vite 8, Tailwind CSS v4 with OKLCH tokens
+- Supabase: PostgreSQL + RLS, auth (email + Google), Realtime, private Storage
+- LiveKit for WebRTC video; `livekit-client` only (the server SDK was removed —
+  tokens are signed inside the Edge Function with Web Crypto)
+- Supabase project ref `kkodmqfehsjccduwcntv`
+- Super Admin bootstrap UID `3bd31686-f95b-4a81-b690-ed7571be0d6e`
+
+## Branding
+
+- Single source of truth: `public/brand/*`, generated from the official crest
+  (`public/digits-election-new-logo-png.png`) — trimmed, alpha-keyed, palette-
+  quantised PNG + WebP at 32/48/64/128/192/256/512, a maskable PWA icon, an Apple
+  touch icon, and a 1200×630 OG card.
+- Palette derives from the crest: navy ink, Nigerian green (action), ceremonial
+  gold (accreditation). Defined in `src/styles.css`.
+- Every page ends with the footer credit: `Built by SirHope of WYN-Tech.` with both
+  names bold and gently floating (`animate-float` / `animate-float-delay`).
+- No Lovable branding, code, telemetry or heart-shaped iconography anywhere.
+
+## Live video topology
+
+Two rooms, not one per feed:
+
+- `digits-intake-ng` — observers publish here first; only operators subscribe.
+- `digits-live-ng` — operator-approved feeds; public viewers get subscribe-only.
+
+A viewer holds **one** WebRTC connection for all 1–6 tiles; adaptive-stream and
+simulcast pick each tile's layer. Approval flips `is_approved`, the broadcaster sees
+it over Realtime and reconnects to the public room — an unapproved camera never
+reaches the public room.
+
+Without `LIVEKIT_*` secrets the platform reports transport `fallback` and tiles play
+each feed's recorded `stream_url`. Everything else (approvals, layout, comments)
+still works. This is by design, not a stub.
+
+## Evidence rules (enforced, not advertised)
+
+- Capture is in-app only — there is no file input anywhere in the codebase.
+- Two-minute hard cap per clip, enforced by the recorder.
+- Location must be granted before the camera opens; coordinates, accuracy, capture
+  time, verified NIN and a SHA-256 hash are bound to every file.
+- Private bucket `iwitness-media`, path `<uid>/<report>/<n>.<ext>` (the storage RLS
+  policy keys on the first path segment). Served only via signed URLs.
+- Clears from the reporter's history after 24h via `my_iwitness_history`; retained
+  in the vault for the Command Center.
+- MIME types are stripped of codec parameters before upload — the bucket's
+  `allowed_mime_types` list rejects `video/mp4;codecs=…`.
+
+## Two real bugs fixed in the v2 pass
+
+1. **Admin RLS was never satisfiable.** Migration `20260729171455` revoked EXECUTE
+   on `has_role(uuid, app_role)` from `authenticated`, but the `user_roles` admin
+   policies called exactly that function. Postgres evaluates policy expressions with
+   the querying role's privileges, so every admin SELECT/INSERT/DELETE on
+   `user_roles` failed with "permission denied for function has_role" — the Users &
+   Roles screen could only ever see the caller's own rows. Replaced with argument-
+   free helpers (`is_staff()`, `is_admin()`, `is_super_admin()`,
+   `is_broadcast_operator()`) that read `auth.uid()` internally, so EXECUTE can be
+   granted safely. See `20260730090400_fix_role_policies.sql`.
+2. **Privilege escalation.** Any `admin` could insert a `super_admin` row for
+   themselves; the restriction existed only in React. Now enforced in the INSERT
+   policy and in `grant_user_role`, plus a trigger preventing removal of the last
+   Super Admin.
+
+## Schema (17 tables)
+
+`profiles` (NIN, locality, language, notify flags), `user_roles`, `live_streams`,
+`broadcast_state` (single row: tile count, six slots, headline, ticker),
+`stream_comments` (DB rate limit: 6 per 30s), `iwitness_reports`, `iwitness_media`,
+`digeo_training_modules` (6 seeded modules with multi-question assessments),
+`digeo_trainee_progress`, `digeo_certificates`, `digeo_applications`,
+`digeo_deployments`, `observation_checklists` (CHECK constraints reject impossible
+result arithmetic), `incident_reports`, `audit_log`, `notifications`, plus the
+`my_iwitness_history` view.
+
+Realtime publication includes `live_streams`, `stream_comments`, `broadcast_state`,
+`iwitness_reports`, `incident_reports`, `digeo_trainee_progress`.
+
+## Tooling
+
+```
+npm run db:push      # apply supabase/migrations/*.sql (all re-runnable)
+npm run db:types     # regenerate src/integrations/supabase/types.ts
+npm run fn:deploy    # deploy Edge Functions + push secrets from .env
+npm run typecheck    # tsc --noEmit
+```
+
+All three scripts use the Supabase Management API with `SUPABASE_ACCESS_TOKEN`.
+
+## Known follow-ups
+
+- `src/lib/nigeria.ts` carries all 774 LGAs from a standard listing — verify against
+  INEC's official register before using it for deployment planning.
+- Ten prioritised proposals in `docs/ROADMAP-PROPOSALS.md`.
+- `.env` must stay in `.gitignore`.

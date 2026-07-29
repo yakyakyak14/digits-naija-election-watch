@@ -17,9 +17,14 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FeaturesRouteImport } from './routes/features'
 import { Route as GetInvolvedRouteImport } from './routes/get-involved'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as IWitnessRouteImport } from './routes/i-witness'
 import { Route as LiveRouteImport } from './routes/live'
+import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedControlCenterRouteImport } from './routes/_authenticated/control-center'
 import { Route as AuthenticatedControlCenterIndexRouteImport } from './routes/_authenticated/control-center/index'
+import { Route as AuthenticatedControlCenterAuditRouteImport } from './routes/_authenticated/control-center/audit'
+import { Route as AuthenticatedControlCenterFieldRouteImport } from './routes/_authenticated/control-center/field'
+import { Route as AuthenticatedControlCenterIncidentsRouteImport } from './routes/_authenticated/control-center/incidents'
 import { Route as AuthenticatedControlCenterLiveRouteImport } from './routes/_authenticated/control-center/live'
 import { Route as AuthenticatedControlCenterObserversRouteImport } from './routes/_authenticated/control-center/observers'
 import { Route as AuthenticatedControlCenterPublicRouteImport } from './routes/_authenticated/control-center/public'
@@ -67,10 +72,20 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IWitnessRoute = IWitnessRouteImport.update({
+  id: '/i-witness',
+  path: '/i-witness',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LiveRoute = LiveRouteImport.update({
   id: '/live',
   path: '/live',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedControlCenterRoute =
   AuthenticatedControlCenterRouteImport.update({
@@ -82,6 +97,24 @@ const AuthenticatedControlCenterIndexRoute =
   AuthenticatedControlCenterIndexRouteImport.update({
     id: '/',
     path: '/',
+    getParentRoute: () => AuthenticatedControlCenterRoute,
+  } as any)
+const AuthenticatedControlCenterAuditRoute =
+  AuthenticatedControlCenterAuditRouteImport.update({
+    id: '/audit',
+    path: '/audit',
+    getParentRoute: () => AuthenticatedControlCenterRoute,
+  } as any)
+const AuthenticatedControlCenterFieldRoute =
+  AuthenticatedControlCenterFieldRouteImport.update({
+    id: '/field',
+    path: '/field',
+    getParentRoute: () => AuthenticatedControlCenterRoute,
+  } as any)
+const AuthenticatedControlCenterIncidentsRoute =
+  AuthenticatedControlCenterIncidentsRouteImport.update({
+    id: '/incidents',
+    path: '/incidents',
     getParentRoute: () => AuthenticatedControlCenterRoute,
   } as any)
 const AuthenticatedControlCenterLiveRoute =
@@ -135,8 +168,13 @@ export interface FileRoutesByFullPath {
   '/features': typeof FeaturesRoute
   '/get-involved': typeof GetInvolvedRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/i-witness': typeof IWitnessRoute
   '/live': typeof LiveRoute
+  '/account': typeof AuthenticatedAccountRoute
   '/control-center': typeof AuthenticatedControlCenterRouteWithChildren
+  '/control-center/audit': typeof AuthenticatedControlCenterAuditRoute
+  '/control-center/field': typeof AuthenticatedControlCenterFieldRoute
+  '/control-center/incidents': typeof AuthenticatedControlCenterIncidentsRoute
   '/control-center/live': typeof AuthenticatedControlCenterLiveRoute
   '/control-center/observers': typeof AuthenticatedControlCenterObserversRoute
   '/control-center/public': typeof AuthenticatedControlCenterPublicRoute
@@ -154,7 +192,12 @@ export interface FileRoutesByTo {
   '/features': typeof FeaturesRoute
   '/get-involved': typeof GetInvolvedRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/i-witness': typeof IWitnessRoute
   '/live': typeof LiveRoute
+  '/account': typeof AuthenticatedAccountRoute
+  '/control-center/audit': typeof AuthenticatedControlCenterAuditRoute
+  '/control-center/field': typeof AuthenticatedControlCenterFieldRoute
+  '/control-center/incidents': typeof AuthenticatedControlCenterIncidentsRoute
   '/control-center/live': typeof AuthenticatedControlCenterLiveRoute
   '/control-center/observers': typeof AuthenticatedControlCenterObserversRoute
   '/control-center/public': typeof AuthenticatedControlCenterPublicRoute
@@ -174,8 +217,13 @@ export interface FileRoutesById {
   '/features': typeof FeaturesRoute
   '/get-involved': typeof GetInvolvedRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/i-witness': typeof IWitnessRoute
   '/live': typeof LiveRoute
+  '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/control-center': typeof AuthenticatedControlCenterRouteWithChildren
+  '/_authenticated/control-center/audit': typeof AuthenticatedControlCenterAuditRoute
+  '/_authenticated/control-center/field': typeof AuthenticatedControlCenterFieldRoute
+  '/_authenticated/control-center/incidents': typeof AuthenticatedControlCenterIncidentsRoute
   '/_authenticated/control-center/live': typeof AuthenticatedControlCenterLiveRoute
   '/_authenticated/control-center/observers': typeof AuthenticatedControlCenterObserversRoute
   '/_authenticated/control-center/public': typeof AuthenticatedControlCenterPublicRoute
@@ -195,8 +243,13 @@ export interface FileRouteTypes {
     | '/features'
     | '/get-involved'
     | '/how-it-works'
+    | '/i-witness'
     | '/live'
+    | '/account'
     | '/control-center'
+    | '/control-center/audit'
+    | '/control-center/field'
+    | '/control-center/incidents'
     | '/control-center/live'
     | '/control-center/observers'
     | '/control-center/public'
@@ -214,7 +267,12 @@ export interface FileRouteTypes {
     | '/features'
     | '/get-involved'
     | '/how-it-works'
+    | '/i-witness'
     | '/live'
+    | '/account'
+    | '/control-center/audit'
+    | '/control-center/field'
+    | '/control-center/incidents'
     | '/control-center/live'
     | '/control-center/observers'
     | '/control-center/public'
@@ -233,8 +291,13 @@ export interface FileRouteTypes {
     | '/features'
     | '/get-involved'
     | '/how-it-works'
+    | '/i-witness'
     | '/live'
+    | '/_authenticated/account'
     | '/_authenticated/control-center'
+    | '/_authenticated/control-center/audit'
+    | '/_authenticated/control-center/field'
+    | '/_authenticated/control-center/incidents'
     | '/_authenticated/control-center/live'
     | '/_authenticated/control-center/observers'
     | '/_authenticated/control-center/public'
@@ -254,6 +317,7 @@ export interface RootRouteChildren {
   FeaturesRoute: typeof FeaturesRoute
   GetInvolvedRoute: typeof GetInvolvedRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  IWitnessRoute: typeof IWitnessRoute
   LiveRoute: typeof LiveRoute
 }
 
@@ -315,12 +379,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HowItWorksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/i-witness': {
+      id: '/i-witness'
+      path: '/i-witness'
+      fullPath: '/i-witness'
+      preLoaderRoute: typeof IWitnessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/live': {
       id: '/live'
       path: '/live'
       fullPath: '/live'
       preLoaderRoute: typeof LiveRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/account': {
+      id: '/_authenticated/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AuthenticatedAccountRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/control-center': {
       id: '/_authenticated/control-center'
@@ -334,6 +412,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/control-center/'
       preLoaderRoute: typeof AuthenticatedControlCenterIndexRouteImport
+      parentRoute: typeof AuthenticatedControlCenterRoute
+    }
+    '/_authenticated/control-center/audit': {
+      id: '/_authenticated/control-center/audit'
+      path: '/audit'
+      fullPath: '/control-center/audit'
+      preLoaderRoute: typeof AuthenticatedControlCenterAuditRouteImport
+      parentRoute: typeof AuthenticatedControlCenterRoute
+    }
+    '/_authenticated/control-center/field': {
+      id: '/_authenticated/control-center/field'
+      path: '/field'
+      fullPath: '/control-center/field'
+      preLoaderRoute: typeof AuthenticatedControlCenterFieldRouteImport
+      parentRoute: typeof AuthenticatedControlCenterRoute
+    }
+    '/_authenticated/control-center/incidents': {
+      id: '/_authenticated/control-center/incidents'
+      path: '/incidents'
+      fullPath: '/control-center/incidents'
+      preLoaderRoute: typeof AuthenticatedControlCenterIncidentsRouteImport
       parentRoute: typeof AuthenticatedControlCenterRoute
     }
     '/_authenticated/control-center/live': {
@@ -389,6 +488,9 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedControlCenterRouteChildren {
+  AuthenticatedControlCenterAuditRoute: typeof AuthenticatedControlCenterAuditRoute
+  AuthenticatedControlCenterFieldRoute: typeof AuthenticatedControlCenterFieldRoute
+  AuthenticatedControlCenterIncidentsRoute: typeof AuthenticatedControlCenterIncidentsRoute
   AuthenticatedControlCenterLiveRoute: typeof AuthenticatedControlCenterLiveRoute
   AuthenticatedControlCenterObserversRoute: typeof AuthenticatedControlCenterObserversRoute
   AuthenticatedControlCenterPublicRoute: typeof AuthenticatedControlCenterPublicRoute
@@ -401,6 +503,10 @@ interface AuthenticatedControlCenterRouteChildren {
 
 const AuthenticatedControlCenterRouteChildren: AuthenticatedControlCenterRouteChildren =
   {
+    AuthenticatedControlCenterAuditRoute: AuthenticatedControlCenterAuditRoute,
+    AuthenticatedControlCenterFieldRoute: AuthenticatedControlCenterFieldRoute,
+    AuthenticatedControlCenterIncidentsRoute:
+      AuthenticatedControlCenterIncidentsRoute,
     AuthenticatedControlCenterLiveRoute: AuthenticatedControlCenterLiveRoute,
     AuthenticatedControlCenterObserversRoute:
       AuthenticatedControlCenterObserversRoute,
@@ -422,10 +528,12 @@ const AuthenticatedControlCenterRouteWithChildren =
   )
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountRoute: typeof AuthenticatedAccountRoute
   AuthenticatedControlCenterRoute: typeof AuthenticatedControlCenterRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountRoute: AuthenticatedAccountRoute,
   AuthenticatedControlCenterRoute: AuthenticatedControlCenterRouteWithChildren,
 }
 
@@ -441,6 +549,7 @@ const rootRouteChildren: RootRouteChildren = {
   FeaturesRoute: FeaturesRoute,
   GetInvolvedRoute: GetInvolvedRoute,
   HowItWorksRoute: HowItWorksRoute,
+  IWitnessRoute: IWitnessRoute,
   LiveRoute: LiveRoute,
 }
 export const routeTree = rootRouteImport

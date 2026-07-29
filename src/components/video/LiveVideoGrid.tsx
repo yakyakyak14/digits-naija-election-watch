@@ -1,316 +1,288 @@
-import { useState, useEffect } from "react";
-import { Maximize2, Minimize2, Volume2, VolumeX, ShieldCheck, MapPin, Eye, Radio, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Antenna,
+  CheckCircle2,
+  Eye,
+  Minimize2,
+  Radio,
+  RefreshCw,
+  ShieldCheck,
+  TriangleAlert,
+  XCircle,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { StreamTile } from "./StreamTile";
+import { useLiveKitRoom } from "@/hooks/useLiveKitRoom";
+import {
+  resolveGridTiles,
+  useBroadcastState,
+  useLiveStreams,
+  type LiveStream,
+} from "@/hooks/useLiveStreams";
+import { cn } from "@/lib/utils";
 
-export interface ObserverStream {
-  id: string;
-  observerName: string;
-  state: string;
-  lga: string;
-  pollingUnit: string;
-  title: string;
-  videoUrl: string;
-  isApproved: boolean;
-  tileSlot: number;
-  viewers: number;
-  status: "live" | "paused" | "offline";
-}
-
-// Fallback high-quality mock live streams for demonstration when live observer feeds are connecting
-const MOCK_OBSERVER_STREAMS: ObserverStream[] = [
-  {
-    id: "stream-1",
-    observerName: "Amina Bello (DIGEO #042)",
-    state: "Kano",
-    lga: "Nasarawa",
-    pollingUnit: "PU 012 - Giginyu Primary School",
-    title: "Voter Accreditation & Queue Monitoring",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-    isApproved: true,
-    tileSlot: 1,
-    viewers: 1420,
-    status: "live",
-  },
-  {
-    id: "stream-2",
-    observerName: "Chidi Okonkwo (DIGEO #108)",
-    state: "Enugu",
-    lga: "Enugu North",
-    pollingUnit: "PU 004 - Independence Layout",
-    title: "INEC BVAS Result Sheet Upload Observation",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    isApproved: true,
-    tileSlot: 2,
-    viewers: 980,
-    status: "live",
-  },
-  {
-    id: "stream-3",
-    observerName: "Babatunde Adeleke (DIGEO #215)",
-    state: "Lagos",
-    lga: "Ikeja",
-    pollingUnit: "PU 018 - Allen Avenue Secretariat",
-    title: "Ballot Counting & Agent Signature Verification",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-    isApproved: true,
-    tileSlot: 3,
-    viewers: 2310,
-    status: "live",
-  },
-  {
-    id: "stream-4",
-    observerName: "Fatima Yusuf (DIGEO #077)",
-    state: "Kaduna",
-    lga: "Kaduna North",
-    pollingUnit: "PU 009 - Unguwan Rimi Market",
-    title: "Peaceful Sorting of Presidential Ballots",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-    isApproved: true,
-    tileSlot: 4,
-    viewers: 860,
-    status: "live",
-  },
-  {
-    id: "stream-5",
-    observerName: "Emeka Nwosu (DIGEO #319)",
-    state: "Rivers",
-    lga: "Port Harcourt",
-    pollingUnit: "PU 022 - GRA Phase 2 Center",
-    title: "Collation Center Security & Transparency Check",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoykit.mp4",
-    isApproved: true,
-    tileSlot: 5,
-    viewers: 1750,
-    status: "live",
-  },
-  {
-    id: "stream-6",
-    observerName: "Grace Danjuma (DIGEO #154)",
-    state: "FCT Abuja",
-    lga: "Abuja Municipal (AMAC)",
-    pollingUnit: "PU 001 - Garki Model Primary School",
-    title: "Public Result Declaration Announcement",
-    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-    isApproved: true,
-    tileSlot: 6,
-    viewers: 3100,
-    status: "live",
-  },
-];
+const GRID_CLASS: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-1 sm:grid-cols-2",
+  3: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+  4: "grid-cols-1 sm:grid-cols-2",
+  5: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+  6: "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+};
 
 interface LiveVideoGridProps {
-  streams?: ObserverStream[];
-  initialTileCount?: number;
-  isAdminControl?: boolean;
-  onToggleApprove?: (streamId: string) => void;
+  /** "public" renders the curated grid; "operator" adds approval controls and shows intake feeds. */
+  mode?: "public" | "operator";
+  onToggleApprove?: (stream: LiveStream) => void;
+  className?: string;
 }
 
-export function LiveVideoGrid({
-  streams = MOCK_OBSERVER_STREAMS,
-  initialTileCount = 4,
-  isAdminControl = false,
-  onToggleApprove,
-}: LiveVideoGridProps) {
-  const [tileCount, setTileCount] = useState<number>(initialTileCount);
-  const [maximizedStream, setMaximizedStream] = useState<ObserverStream | null>(null);
-  const [mutedStates, setMutedStates] = useState<Record<string, boolean>>({});
+export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: LiveVideoGridProps) {
+  const scope = mode === "operator" ? "all" : "public";
+  const streamsQuery = useLiveStreams(scope);
+  const broadcastQuery = useBroadcastState();
+  const room = useLiveKitRoom(mode === "operator" ? "intake" : "public");
 
-  const activeStreams = streams.slice(0, tileCount);
+  const [tileOverride, setTileOverride] = useState<number | null>(null);
+  const [maximized, setMaximized] = useState<string | null>(null);
+  const [muted, setMuted] = useState<Record<string, boolean>>({});
 
-  const toggleMute = (id: string) => {
-    setMutedStates((prev) => ({ ...prev, [id]: !prev[id] }));
-  };
+  // Memoised so the `?? []` fallback doesn't hand useMemo a fresh array each
+  // render, which would re-resolve the grid (and re-key the tiles) constantly.
+  const streams = useMemo(() => streamsQuery.data ?? [], [streamsQuery.data]);
+  const state = broadcastQuery.data ?? null;
 
-  // Determine grid CSS layout based on tile count
-  const getGridClass = () => {
-    switch (tileCount) {
-      case 1:
-        return "grid-cols-1";
-      case 2:
-        return "grid-cols-1 md:grid-cols-2";
-      case 3:
-        return "grid-cols-1 md:grid-cols-3";
-      case 4:
-        return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-2";
-      case 5:
-        return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
-      case 6:
-      default:
-        return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
-    }
-  };
+  const tiles = useMemo(
+    () => resolveGridTiles(streams, state, tileOverride ?? undefined),
+    [streams, state, tileOverride],
+  );
+
+  const tileCount = tiles.length || (tileOverride ?? state?.tile_count ?? 4);
+  const maximizedStream = tiles.find((t) => t.id === maximized) ?? null;
+
+  // Esc always leaves the maximised view, matching every other video player.
+  useEffect(() => {
+    if (!maximized) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setMaximized(null);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [maximized]);
+
+  const totalViewers = streams.reduce((sum, s) => sum + (s.viewer_count ?? 0), 0);
+  const liveCount = streams.filter((s) => s.status === "live").length;
 
   return (
-    <div className="space-y-4">
-      {/* Tile Count Switcher Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-xs">
-        <div className="flex items-center gap-2">
-          <Radio className="h-5 w-5 text-red-500 animate-pulse" />
-          <span className="font-display font-semibold text-sm text-foreground">
-            Control Center Live Observer Grid
+    <div className={cn("space-y-4", className)}>
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-plate">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="flex items-center gap-1.5 rounded-lg bg-live/10 px-2 py-1 text-xs font-bold text-live">
+            <Radio className="h-3.5 w-3.5 animate-pulse" />
+            {liveCount} live
           </span>
-          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300">
-            {activeStreams.length} Feeds Broadcasting
+          <Badge variant="outline" className="gap-1 text-[11px]">
+            <Eye className="h-3 w-3" />
+            {totalViewers.toLocaleString()} watching
+          </Badge>
+          <Badge
+            variant="outline"
+            className={cn(
+              "gap-1 text-[11px]",
+              room.transport === "livekit"
+                ? "border-primary/40 text-primary"
+                : "border-accent/50 text-accent-foreground dark:text-accent",
+            )}
+            title={
+              room.transport === "livekit"
+                ? "Sub-second WebRTC transport via LiveKit"
+                : "Live video provider not configured — tiles play each feed's recorded source"
+            }
+          >
+            <Antenna className="h-3 w-3" />
+            {room.transport === "livekit"
+              ? room.status === "connected"
+                ? "WebRTC connected"
+                : room.status === "reconnecting"
+                  ? "Reconnecting…"
+                  : "Connecting…"
+              : "Preview transport"}
           </Badge>
         </div>
 
-        {/* 1 to 6 Split Screen Buttons */}
-        <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
-          <span className="text-xs text-muted-foreground px-2 font-medium">Split View:</span>
-          {[1, 2, 3, 4, 5, 6].map((num) => (
-            <button
-              key={num}
-              onClick={() => setTileCount(num)}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
-                tileCount === num
-                  ? "bg-primary text-primary-foreground shadow-xs scale-105"
-                  : "text-muted-foreground hover:text-foreground hover:bg-background/50"
-              }`}
-            >
-              {num} Tile{num > 1 ? "s" : ""}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div
+            role="radiogroup"
+            aria-label="Number of tiles"
+            className="flex items-center gap-0.5 rounded-lg bg-muted p-1"
+          >
+            <span className="px-1.5 text-[11px] font-semibold text-muted-foreground">Tiles</span>
+            {[1, 2, 3, 4, 5, 6].map((n) => (
+              <button
+                key={n}
+                type="button"
+                role="radio"
+                aria-checked={tileCount === n}
+                onClick={() => setTileOverride(n)}
+                className={cn(
+                  "h-7 w-7 rounded-md text-xs font-bold transition-all",
+                  tileCount === n
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-muted-foreground hover:bg-background/70 hover:text-foreground",
+                )}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8"
+            title="Refresh feeds"
+            aria-label="Refresh feeds"
+            onClick={() => void streamsQuery.refetch()}
+          >
+            <RefreshCw className={cn("h-4 w-4", streamsQuery.isFetching && "animate-spin")} />
+          </Button>
         </div>
       </div>
 
-      {/* Grid Display */}
-      <div className={`grid gap-4 ${getGridClass()}`}>
-        {activeStreams.map((stream, idx) => {
-          const isMuted = mutedStates[stream.id] ?? true;
-          return (
-            <div
+      {room.status === "error" && room.error && (
+        <p className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+          {room.error}
+        </p>
+      )}
+
+      {/* Grid */}
+      {tiles.length === 0 ? (
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed bg-card/60 px-6 py-16 text-center">
+          <Radio className="h-8 w-8 text-muted-foreground" />
+          <div>
+            <p className="font-display font-semibold">No feeds on air right now</p>
+            <p className="mt-1 max-w-md text-sm text-muted-foreground">
+              {mode === "operator"
+                ? "Observer feeds appear here the moment a DIGEO goes live from the field."
+                : "The Command Center publishes observer feeds here on election days. Follow the i-Witness stream in the meantime."}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className={cn("grid gap-3 sm:gap-4", GRID_CLASS[tileCount] ?? GRID_CLASS[4])}>
+          {tiles.map((stream, idx) => (
+            <StreamTile
               key={stream.id}
-              className="group relative overflow-hidden rounded-xl border bg-black shadow-md transition-all hover:border-emerald-500/50"
+              stream={stream}
+              feed={stream.livekit_identity ? room.feeds[stream.livekit_identity] : undefined}
+              index={idx}
+              density={tileCount}
+              isMuted={muted[stream.id] ?? true}
+              onToggleMute={() => setMuted((m) => ({ ...m, [stream.id]: !(m[stream.id] ?? true) }))}
+              onMaximize={() => setMaximized(stream.id)}
             >
-              {/* Top Banner Overlay */}
-              <div className="absolute top-0 inset-x-0 z-20 flex items-center justify-between p-2.5 bg-gradient-to-b from-black/80 via-black/40 to-transparent">
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1 rounded bg-red-600 px-2 py-0.5 text-[10px] font-bold text-white uppercase tracking-wider animate-pulse">
-                    <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                    LIVE TILE #{idx + 1}
-                  </span>
-                  <span className="text-xs font-semibold text-white drop-shadow-xs truncate max-w-[140px] sm:max-w-[180px]">
-                    {stream.observerName}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Badge className="bg-black/60 text-emerald-400 border border-emerald-500/40 backdrop-blur-xs text-[10px] gap-1">
-                    <MapPin className="h-2.5 w-2.5" />
-                    {stream.state}, {stream.lga}
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Video Element */}
-              <div className="relative aspect-video w-full bg-slate-950 flex items-center justify-center">
-                <video
-                  src={stream.videoUrl}
-                  autoPlay
-                  loop
-                  muted={isMuted}
-                  playsInline
-                  className="h-full w-full object-cover"
-                />
-              </div>
-
-              {/* Bottom Info Overlay */}
-              <div className="absolute bottom-0 inset-x-0 z-20 p-2.5 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-end justify-between">
-                <div className="space-y-0.5 text-white pr-2">
-                  <p className="text-xs font-bold leading-tight line-clamp-1">{stream.title}</p>
-                  <p className="text-[11px] text-slate-300 flex items-center gap-1">
-                    <ShieldCheck className="h-3 w-3 text-emerald-400" />
-                    {stream.pollingUnit}
-                  </p>
-                </div>
-
-                {/* Controls (Mute, Maximize) */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button
-                    onClick={() => toggleMute(stream.id)}
-                    className="p-1.5 rounded-lg bg-black/60 hover:bg-black/90 text-white backdrop-blur-xs transition-colors"
-                    title={isMuted ? "Unmute Audio" : "Mute Audio"}
-                  >
-                    {isMuted ? <VolumeX className="h-4 w-4 text-red-400" /> : <Volume2 className="h-4 w-4 text-emerald-400" />}
-                  </button>
-
-                  <button
-                    onClick={() => setMaximizedStream(stream)}
-                    className="p-1.5 rounded-lg bg-black/60 hover:bg-black/90 text-white backdrop-blur-xs transition-colors"
-                    title="Maximize to Full Screen"
-                  >
-                    <Maximize2 className="h-4 w-4" />
-                  </button>
-
-                  {isAdminControl && onToggleApprove && (
-                    <Button
-                      size="sm"
-                      variant={stream.isApproved ? "default" : "destructive"}
-                      onClick={() => onToggleApprove(stream.id)}
-                      className="text-[10px] h-7 px-2"
-                    >
-                      {stream.isApproved ? "Approved" : "Approve"}
-                    </Button>
+              {mode === "operator" && onToggleApprove && (
+                <button
+                  type="button"
+                  onClick={() => onToggleApprove(stream)}
+                  title={stream.is_approved ? "Remove from public grid" : "Approve for public grid"}
+                  className={cn(
+                    "grid h-7 place-items-center rounded-lg px-2 text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm transition-colors",
+                    stream.is_approved
+                      ? "bg-primary/90 text-primary-foreground hover:bg-primary"
+                      : "bg-black/55 text-white hover:bg-black/85",
                   )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                >
+                  {stream.is_approved ? "On air" : "Approve"}
+                </button>
+              )}
+            </StreamTile>
+          ))}
+        </div>
+      )}
 
-      {/* Full-Screen Maximized Modal */}
+      {/* Maximised view */}
       {maximizedStream && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="relative w-full max-w-6xl overflow-hidden rounded-2xl border border-emerald-500/30 bg-slate-950 shadow-2xl">
-            {/* Header */}
-            <div className="flex items-center justify-between bg-slate-900/90 px-6 py-3 border-b border-slate-800">
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1.5 rounded bg-red-600 px-2.5 py-1 text-xs font-bold text-white">
-                  <span className="h-2 w-2 rounded-full bg-white animate-ping" />
-                  MAXIMIZED OBSERVER STREAM
-                </span>
-                <div>
-                  <h3 className="font-bold text-white text-sm sm:text-base">{maximizedStream.observerName}</h3>
-                  <p className="text-xs text-emerald-400 font-medium">{maximizedStream.state} State ({maximizedStream.lga} LGA) — {maximizedStream.pollingUnit}</p>
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${maximizedStream.observer_name} maximised`}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-3 backdrop-blur-md sm:p-6"
+        >
+          <div className="w-full max-w-6xl overflow-hidden rounded-2xl border border-primary/30 bg-navy-deep shadow-lifted">
+            <div className="flex items-start justify-between gap-3 border-b border-white/10 px-4 py-3 sm:px-6">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5 rounded bg-live px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                    On air
+                  </span>
+                  <h3 className="truncate font-display text-sm font-bold text-white sm:text-base">
+                    {maximizedStream.observer_name}
+                  </h3>
                 </div>
+                <p className="mt-0.5 truncate text-xs text-emerald-300">
+                  {maximizedStream.state}
+                  {maximizedStream.lga ? ` · ${maximizedStream.lga} LGA` : ""}
+                  {maximizedStream.polling_unit ? ` · ${maximizedStream.polling_unit}` : ""}
+                </p>
               </div>
               <Button
-                variant="ghost"
                 size="sm"
-                onClick={() => setMaximizedStream(null)}
-                className="text-slate-300 hover:text-white hover:bg-slate-800"
+                variant="ghost"
+                onClick={() => setMaximized(null)}
+                className="shrink-0 text-slate-300 hover:bg-white/10 hover:text-white"
               >
-                <Minimize2 className="h-5 w-5 mr-1" />
-                Close Fullscreen
+                <Minimize2 className="mr-1.5 h-4 w-4" />
+                Close
               </Button>
             </div>
 
-            {/* Video Player */}
-            <div className="relative aspect-video w-full bg-black">
-              <video
-                src={maximizedStream.videoUrl}
-                autoPlay
-                controls
-                className="h-full w-full object-contain"
-              />
-            </div>
+            <StreamTile
+              stream={maximizedStream}
+              feed={
+                maximizedStream.livekit_identity
+                  ? room.feeds[maximizedStream.livekit_identity]
+                  : undefined
+              }
+              index={0}
+              density={1}
+              isMuted={muted[maximizedStream.id] ?? true}
+              onToggleMute={() =>
+                setMuted((m) => ({ ...m, [maximizedStream.id]: !(m[maximizedStream.id] ?? true) }))
+              }
+              onMaximize={() => setMaximized(null)}
+            />
 
-            {/* Info Footer */}
-            <div className="flex items-center justify-between bg-slate-900 px-6 py-3 border-t border-slate-800 text-xs text-slate-300">
-              <div className="flex items-center gap-4">
-                <span className="flex items-center gap-1 text-white font-medium">
-                  <Eye className="h-4 w-4 text-emerald-400" />
-                  {maximizedStream.viewers.toLocaleString()} Public Viewers Connected
-                </span>
-                <span className="text-slate-400">Stream Title: <strong className="text-white">{maximizedStream.title}</strong></span>
-              </div>
-              <Badge className="bg-emerald-600 text-white font-semibold">
-                DIGEO Verified Observer Stream
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-slate-300 sm:px-6">
+              <span className="flex items-center gap-1.5 font-medium text-white">
+                <Eye className="h-4 w-4 text-emerald-400" />
+                {(maximizedStream.viewer_count ?? 0).toLocaleString()} watching
+              </span>
+              <span className="truncate">{maximizedStream.stream_title}</span>
+              <Badge className="gap-1 bg-primary font-semibold text-primary-foreground">
+                {maximizedStream.is_approved ? (
+                  <>
+                    <ShieldCheck className="h-3 w-3" /> Verified DIGEO feed
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="h-3 w-3" /> Awaiting approval
+                  </>
+                )}
               </Badge>
             </div>
           </div>
         </div>
+      )}
+
+      {mode === "operator" && streams.length > 0 && (
+        <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+          {streams.filter((s) => s.is_approved).length} of {streams.length} feeds approved for the
+          public grid.
+        </p>
       )}
     </div>
   );

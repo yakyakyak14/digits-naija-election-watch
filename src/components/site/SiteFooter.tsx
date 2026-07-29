@@ -1,49 +1,126 @@
 import { Link } from "@tanstack/react-router";
+import { Mail, MapPin, ShieldCheck } from "lucide-react";
+import { DigitsMark } from "@/components/brand/DigitsLogo";
+import { TOTAL_LGAS } from "@/lib/nigeria";
+import { cn } from "@/lib/utils";
 
-export function SiteFooter() {
+const COLUMNS = [
+  {
+    heading: "Watch",
+    links: [
+      { to: "/live", label: "Live observer grid" },
+      { to: "/i-witness", label: "i-Witness reports" },
+      { to: "/features", label: "Platform capabilities" },
+    ],
+  },
+  {
+    heading: "Take part",
+    links: [
+      { to: "/get-involved", label: "Become a DIGEO" },
+      { to: "/how-it-works", label: "How it works" },
+      { to: "/auth", label: "Sign in" },
+    ],
+  },
+  {
+    heading: "Organisation",
+    links: [
+      { to: "/about", label: "About DIGITs" },
+      { to: "/contact", label: "Contact & partnerships" },
+      { to: "/control-center", label: "Command Center" },
+    ],
+  },
+] as const;
+
+/**
+ * Global footer. Rendered at the base of every page — public marketing, the live
+ * grid, and the Command Center alike — so the build credit and the accountability
+ * links are never missing.
+ */
+export function SiteFooter({ className }: { className?: string }) {
+  const year = new Date().getFullYear();
+
   return (
-    <footer className="border-t bg-secondary/40">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-4">
-        <div>
-          <div className="flex items-center gap-2 font-display text-lg font-bold text-foreground">
-            <img src="/favicon.svg" alt="DIGITs Logo" className="h-7 w-7" />
-            <span>DIGITs Nigeria</span>
+    <footer className={cn("mt-auto border-t bg-navy-panel text-white", className)}>
+      <div className="bg-weave">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-2 lg:grid-cols-[1.6fr_repeat(3,1fr)]">
+          <div className="space-y-4">
+            <Link
+              to="/"
+              className="flex items-center gap-3"
+              aria-label="DIGITs Election Watch home"
+            >
+              <DigitsMark size={46} />
+              <span className="font-display text-lg font-extrabold leading-tight">
+                DIGITs
+                <span className="ml-1.5 text-brand-gold">Election Watch</span>
+              </span>
+            </Link>
+
+            <p className="max-w-sm text-sm leading-relaxed text-white/70">
+              Citizen observation of Nigerian elections, streamed as it happens and verified before
+              it is published. Built for the {TOTAL_LGAS.toLocaleString()} local government areas
+              across 36 states and the Federal Capital Territory.
+            </p>
+
+            <div className="flex flex-wrap gap-4 text-xs text-white/60">
+              <a
+                href="mailto:hello@digits.ng"
+                className="flex items-center gap-1.5 transition-colors hover:text-white"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                hello@digits.ng
+              </a>
+              <span className="flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5" />
+                Abuja, Nigeria
+              </span>
+            </div>
+
+            <div className="h-1 w-28 rounded bg-flag-gradient" aria-hidden />
           </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Citizen-powered transparency and real-time election monitoring for Nigeria.
-          </p>
-          <div className="mt-4 h-1 w-24 bg-flag-gradient rounded" />
+
+          {COLUMNS.map((column) => (
+            <nav key={column.heading} aria-label={column.heading}>
+              <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-gold">
+                {column.heading}
+              </h2>
+              <ul className="space-y-2 text-sm text-white/70">
+                {column.links.map((link) => (
+                  <li key={link.to}>
+                    <Link to={link.to} className="transition-colors hover:text-white">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
-        <div>
-          <div className="mb-2 text-sm font-semibold text-foreground">Platform</div>
-          <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li><Link to="/live" className="hover:text-foreground transition-colors">Live 1-6 Observer Feeds</Link></li>
-            <li><Link to="/features" className="hover:text-foreground transition-colors">Features</Link></li>
-            <li><Link to="/how-it-works" className="hover:text-foreground transition-colors">How it Works</Link></li>
-            <li><Link to="/get-involved" className="hover:text-foreground transition-colors">Become a DIGEO</Link></li>
-          </ul>
-        </div>
-        <div>
-          <div className="mb-2 text-sm font-semibold text-foreground">Organization</div>
-          <ul className="space-y-1.5 text-sm text-muted-foreground">
-            <li><Link to="/about" className="hover:text-foreground transition-colors">About DIGITs</Link></li>
-            <li><Link to="/contact" className="hover:text-foreground transition-colors">Contact Support</Link></li>
-            <li><Link to="/auth" className="hover:text-foreground transition-colors">Control Center Login</Link></li>
-          </ul>
-        </div>
-        <div>
-          <div className="mb-2 text-sm font-semibold text-foreground">Electoral Integrity</div>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Empowering voters with real-time video observation, verified i-Witness reports, and independent polling unit tallies across all 36 States & FCT.
-          </p>
-        </div>
-      </div>
-      <div className="border-t py-6 text-center text-xs text-muted-foreground space-y-2">
-        <div>
-          © {new Date().getFullYear()} DIGITs Nigeria Election Watch. All rights reserved.
-        </div>
-        <div className="text-sm font-medium text-foreground">
-          Built by <strong className="font-bold text-emerald-600 dark:text-emerald-400 animate-float drop-shadow-sm">SirHope</strong> of <strong className="font-bold text-amber-500 dark:text-amber-400 animate-float-delay drop-shadow-sm">WYN-Tech</strong>.
+
+        <div className="border-t border-white/10">
+          <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-6 text-center sm:flex-row sm:justify-between sm:text-left">
+            <p className="text-xs text-white/55">
+              © {year} DIGITs Nigeria Election Watch. Independent, non-partisan, citizen-funded.
+            </p>
+
+            <p className="flex items-center gap-1.5 text-xs text-white/55">
+              <ShieldCheck className="h-3.5 w-3.5 text-brand-green-bright" />
+              Evidence retained in a private vault. Never sold, never shared with any party.
+            </p>
+
+            {/* Build credit — required on every page. */}
+            <p className="text-sm text-white/85">
+              Built by{" "}
+              <strong className="animate-float font-extrabold text-brand-green-bright drop-shadow-sm">
+                SirHope
+              </strong>{" "}
+              of{" "}
+              <strong className="animate-float-delay font-extrabold text-brand-gold drop-shadow-sm">
+                WYN-Tech
+              </strong>
+              .
+            </p>
+          </div>
         </div>
       </div>
     </footer>

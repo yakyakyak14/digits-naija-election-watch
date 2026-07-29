@@ -1,33 +1,167 @@
-# DIGITs Nigeria Election Watch 🇳🇬
+# DIGITs Election Watch
 
-A citizen-powered, real-time digital transparency and election monitoring platform for Nigeria. Built with high resilience, live video streaming grid, trained election observer (DIGEO) certification, real-time i-Witness camera reporting, and a Control Center.
+Citizen observation of Nigerian elections — live observer feeds, verified i-Witness
+evidence, and accredited DIGEO observer training.
 
-## Key Features
+Watching, reading and training require **no account**. Signing in is needed for
+exactly two things: commenting on a live feed, and submitting evidence.
 
-- **LiveKit Real-Time Observer Video Grid**: 1 to 6 split screen live public feeds from DIGITs Election Observers (DIGEO), with click-to-maximize tile views.
-- **Control Center Operator Suite**: Role-gated dashboard (`super_admin`, `admin`, `control_center_operator`, `observer_coordinator`, `digeo`, `reviewer`, `viewer`), live video stream switcher, trainee verification, and incident triage.
-- **i-Witness Camera Recording**: Real-time camera & microphone recording (max 2 mins), Google Places API location autocomplete dropdown, mandatory geolocation, profile NIN validation, and 24h user history auto-expiry while preserving media in Supabase cloud storage.
-- **DIGEO Observer Training & Certification**: Interactive training modules, electoral code of conduct, quizzes, and automated badge/certificate generation.
-- **Open Public Access**: Unauthenticated visitors can view all live feeds, maps, polling unit tallies, and training materials. Authentication is strictly required only for commenting and submitting i-Witness reports.
-- **10 Advanced Enhancements**: Tally board visualizations, AI triage tags, Panic emergency distress beacon, USSD/PWA offline queue indicator, public archives, multi-lingual support (English, Hausa, Yoruba, Igbo, Pidgin), geofencing, cryptographic SHA-256 media signing, community fact-checking, and operator broadcast switcher.
+---
 
-## Quick Start
+## Stack
+
+| Layer            | Choice                                                           |
+| ---------------- | ---------------------------------------------------------------- |
+| App              | TanStack Router + React 19 + Vite 8 (client-rendered SPA)         |
+| Styling          | Tailwind CSS v4, OKLCH design tokens, Sora + Inter                |
+| Database & auth  | Supabase (PostgreSQL, RLS on every table, email + Google OAuth)    |
+| Realtime         | Supabase Realtime (feeds, comments, grid layout, evidence queue)  |
+| Live video       | LiveKit WebRTC — one shared room, adaptive simulcast              |
+| Evidence storage | Supabase Storage, private bucket, short-lived signed URLs         |
+| Server secrets   | Supabase Edge Functions (`places`, `livekit-token`)               |
+
+There is no Node server: the app deploys as static assets. Anything that needs a
+secret runs in an Edge Function, so no key ever reaches the browser.
+
+---
+
+## Getting started
 
 ```bash
-# Clone repository
-git clone https://github.com/SirHope14/digits-naija-election-watch.git
-cd digits-naija-election-watch
-
-# Install dependencies
-npm install
-
-# Run dev server
+npm install --legacy-peer-deps
 npm run dev
+```
 
-# Production build
-npm run build
+### Environment
+
+`.env` (never committed) holds the client keys plus the admin credentials the
+tooling scripts use:
+
+```dotenv
+VITE_SUPABASE_URL=https://<ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<anon key>
+VITE_SUPABASE_PROJECT_ID=<ref>
+
+# Tooling only — used by scripts/, never bundled
+SUPABASE_PROJECT_ID=<ref>
+SUPABASE_ACCESS_TOKEN=<personal access token>
+
+# Pushed to Supabase function secrets by `npm run fn:deploy`
+GOOGLE_PLACES_API=<google places key>
+LIVEKIT_URL=wss://<project>.livekit.cloud
+LIVEKIT_API_KEY=<livekit key>
+LIVEKIT_API_SECRET=<livekit secret>
+```
+
+Only `VITE_*` variables reach the browser. `GOOGLE_PLACES_API` and the `LIVEKIT_*`
+trio are pushed into Supabase function secrets and read only inside the Edge
+Functions.
+
+### Enabling live WebRTC video
+
+Until the `LIVEKIT_*` secrets are set, the platform reports transport
+**"Preview transport"** and each tile plays the `stream_url` recorded against that
+feed. The grid, approvals, layout switching and comments all work in this mode —
+only WebRTC is inert.
+
+To switch it on:
+
+1. Create a project at [LiveKit Cloud](https://cloud.livekit.io), or self-host.
+2. Put `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` in `.env`.
+3. `npm run fn:deploy -- --secrets`
+
+The transport badge on the live grid and the Command Center → Settings page both
+flip to **Connected** with no code change.
+
+---
+
+## Commands
+
+```bash
+npm run dev          # dev server
+npm run build        # production build to dist/
+npm run typecheck    # tsc --noEmit
+npm run lint         # eslint (prettier included)
+npm run db:push      # apply supabase/migrations/*.sql (re-runnable)
+npm run db:types     # regenerate src/integrations/supabase/types.ts from live schema
+npm run fn:deploy    # deploy Edge Functions + push their secrets
+```
+
+`npm run db:push` accepts a filter: `npm run db:push -- 20260730`.
+
+---
+
+## Architecture notes
+
+### Live video topology
+
+Two LiveKit rooms, not one room per feed:
+
+- **`digits-intake-ng`** — every observer publishes here first. Only Command
+  Center operators hold subscribe tokens for it.
+- **`digits-live-ng`** — feeds an operator has approved. Public viewers get a
+  subscribe-only token for this room and nothing else.
+
+A viewer therefore holds **one** WebRTC connection regardless of how many tiles
+are on screen; adaptive-stream plus simulcast pick the layer each tile needs. One
+connection per tile would multiply bandwidth and handshake cost by six for no
+benefit.
+
+Approval moves a publisher between rooms: the broadcaster watches its own
+`live_streams` row over Realtime and reconnects to the public room the moment
+`is_approved` flips, so an unapproved camera never reaches the public room.
+
+### Evidence pipeline
+
+1. Capture happens **in-app only** — there is no file input anywhere, so a clip
+   from the gallery cannot enter the chain.
+2. Clips are hard-capped at two minutes by the recorder.
+3. Coordinates, accuracy radius, capture time, verified NIN and a SHA-256 hash
+   are bound to each file before upload.
+4. Objects land in the private `iwitness-media` bucket under
+   `<uid>/<report>/<n>.<ext>` — the path the storage RLS policy keys on.
+5. Media clears from the reporter's in-app history after 24 hours
+   (`expires_from_user_at`, enforced by the `my_iwitness_history` view) and is
+   retained in the vault for the Command Center.
+6. Nothing is public until an operator publishes it.
+
+### Roles
+
+Seven roles — `super_admin`, `admin`, `control_center_operator`,
+`observer_coordinator`, `digeo`, `reviewer`, `viewer` — enforced by row-level
+security, not by the interface:
+
+- Admins cannot grant `admin` or `super_admin` (database policy + RPC guard).
+- The last `super_admin` cannot be revoked (trigger).
+- Grants and revocations go through `grant_user_role` / `revoke_user_role`, which
+  write to `audit_log`.
+
+### Nigerian reference data
+
+`src/lib/nigeria.ts` carries all 36 states, the FCT, their geopolitical zones,
+capitals and LGAs. It backs every State/LGA select and is the offline fallback for
+location lookup when Places is unavailable — which matters most in the field.
+Verify the LGA lists against INEC's current register before each election cycle.
+
+---
+
+## Repository layout
+
+```
+public/brand/                 generated logo variants, PWA icons, OG card
+scripts/                      Supabase Management API tooling
+src/components/brand/         crest and lockup
+src/components/forms/         DIGEO enrolment, deployment, checklist, incident
+src/components/live/          public comment thread
+src/components/reports/       i-Witness recorder
+src/components/video/         grid, tile, broadcaster
+src/hooks/                    auth, viewer, geolocation, streams, comments
+src/lib/                      places, streaming, iwitness, training, roles, nigeria
+src/routes/                   public pages + _authenticated subtree
+supabase/functions/           Edge Functions (Deno)
+supabase/migrations/          schema, RLS, curriculum seed
 ```
 
 ---
 
-*Built by **SirHope** of **WYN-Tech**.*
+Built by **SirHope** of **WYN-Tech**.

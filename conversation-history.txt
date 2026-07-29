@@ -22,3 +22,111 @@ Look through and please enhance and complete remaining tasks, and implement the 
 - Created implementation plan artifact implementation_plan.md.
 - User explicitly approved execution.
 - Commencing full execution of branding cleanup, video grid, training system, camera recorder, footer, database migrations, and 10 enhancements.
+
+================================================================================
+SESSION 2 — 2026-07-30 — Platform v2: streaming, evidence, forms, redesign
+================================================================================
+
+[You]
+"Look through all Lovable and Antigravity did, and enhance platform to the max and
+ensure real-time streaming works efficiently, and viewers can watch and
+authenticated viewers or users can comment and also share eye-witness (i-Witness)
+reports straight to Command Center. Ensure all Lovable related components and
+hearts shape and mentions anywhere in platform code removed. Integrate as platform
+new logo across everywhere in platform. Redesign platform using Claude's ui/ux
+design skills at max pro level and have the footer at the base of all platform
+pages. Rewrite words better on platform homepage and metadata of platform.
+SUPABASE_ACCESS_TOKEN and GOOGLE_PLACES_API saved in .env. Training forms properly
+generated for DIGEO. Suggest 10 more improvements... [plus the full roles / Control
+Center / LiveKit / DIGEO training / anonymous-access / i-Witness storage /
+footer-credit / push-to-GitHub specification]"
+
+[Me — audit first]
+Read every source file, both prior migrations, and the deployment config before
+writing anything. Three findings changed the plan:
+
+  1. Migration 20260729180000_platform_features.sql had NEVER been applied. The
+     live database contained only `profiles` and `user_roles` — no live_streams, no
+     iwitness_reports, no training tables. Verified via the Supabase Management API:
+       select table_name from information_schema.tables where table_schema='public'
+       -> [profiles, user_roles]
+     So "LiveKit integration", "i-Witness storage" and "DIGEO training" had no
+     backing schema at all; the UI was hard-coded arrays and sample MP4s.
+
+  2. Admin RLS could never be satisfied. Migration 20260729171455 revoked EXECUTE on
+     has_role(uuid, app_role) from `authenticated`, but the user_roles admin policies
+     call exactly that function. Proved it by impersonating the Super Admin:
+       begin; set local role authenticated;
+       set local "request.jwt.claims" = '{"sub":"3bd3...","role":"authenticated"}';
+       select count(*) from public.user_roles;
+       -> ERROR 42501: permission denied for function has_role
+     The Users & Roles screen could only ever see the caller's own rows.
+
+  3. The app is a client-only SPA. vite.config.ts has the router plugin but NOT the
+     TanStack Start plugin, and vercel.json builds to dist/ with SPA rewrites. So
+     createServerFn cannot work — my first attempt at server-side Places/LiveKit
+     proxies failed the build with:
+       Error: Missing "#tanstack-start-entry" specifier in "@tanstack/start-server-core"
+     Rather than convert the deployment to SSR (which the user had only just
+     stabilised on Vercel), I moved both secret-holding proxies to Supabase Edge
+     Functions and kept the SPA build untouched.
+
+[Commands that mattered]
+  # confirm the schema gap
+  curl -X POST .../database/query -d '{"query":"select table_name from ..."}'
+  # apply every pending migration through the Management API
+  node scripts/apply-migrations.mjs            -> 6 migrations [ok]
+  # prove the RLS fix
+  select count(*) from public.user_roles       -> 2 rows (was: permission denied)
+  select count(*) from list_platform_users()   -> 2
+  # regenerate types from the live schema
+  npm run db:types                             -> 1444 lines, 19 tables/views
+  # optimise the crest into web assets
+  node logo.mjs && node logo2.mjs              -> 1.25MB -> 3KB..109KB PNG + WebP
+  # deploy the Edge Functions and push their secrets
+  npm run fn:deploy                            -> places ACTIVE v1, livekit-token ACTIVE v1
+  # smoke-test them for real
+  POST /functions/v1/places {"action":"autocomplete","query":"Ikeja"}
+    -> real Google results: Ikeja, Ikeja City Mall, Ikeja GRA, Ikeja High Court
+  POST /functions/v1/livekit-token {"action":"viewer"}
+    -> {"transport":"fallback"}  (correct: no LIVEKIT_* secrets set yet)
+  # gates
+  npm run typecheck   -> 0 errors
+  npx eslint .        -> 0 errors (12 pre-existing shadcn/ui warnings)
+  npm run build       -> built in 2.45s
+  npm run dev + curl  -> / 200, /live 200, /manifest.webmanifest 200, /brand/... 200
+
+[What I built]
+  - 5 migrations: profiles identity fields (NIN, 11-digit CHECK, unique index),
+    argument-free RLS helpers, live_streams + broadcast_state, stream_comments with
+    a DB-side rate limit, iwitness_reports + iwitness_media + private bucket +
+    24h expiry view, digeo_applications / deployments / observation_checklists /
+    incident_reports, audit_log, notifications, and a 6-module curriculum seed with
+    24 assessment questions written from the Electoral Act 2022, BVAS protocol and
+    EC8A arithmetic.
+  - Fixed the two bugs above and added a trigger protecting the last Super Admin.
+  - LiveKit: two-room topology (intake -> approval -> public), ONE WebRTC connection
+    for all six tiles with adaptive-stream + dynacast, publisher reconnect driven by
+    a Realtime subscription on the observer's own row.
+  - i-Witness: video + stills, 2-minute hard cap, location gate before the camera
+    opens, SHA-256 hash, save-to-device, private bucket, 24h user-side expiry,
+    realtime arrival in the Command Center queue with a toast.
+  - Four DIGEO forms (enrolment, deployment, phase checklist, incident) sharing one
+    set of form primitives. The checklist runs the three result arithmetic checks in
+    the UI and the database rejects the two impossible bounds outright.
+  - Command Center: 11 screens including live ops with slot assignment, the evidence
+    queue, incident triage, observer accreditation, trainee completion roster and an
+    append-only audit trail.
+  - Design system rebuilt from the crest (navy/green/gold OKLCH), theme toggle,
+    every page wrapped so the footer sits at the base — including the Command Center.
+  - Brand assets generated from the supplied logo; PWA manifest, service worker that
+    refuses to cache election data, and an install prompt.
+  - Homepage and all metadata rewritten; robots.txt and sitemap.xml updated.
+  - docs/ROADMAP-PROPOSALS.md with the 10 requested improvements.
+
+[What I did NOT do, and said so]
+  - Did not switch the Vercel deployment to SSR.
+  - Did not fabricate LiveKit credentials: the platform honestly reports "Preview
+    transport" until LIVEKIT_URL / LIVEKIT_API_KEY / LIVEKIT_API_SECRET are set, and
+    the README says exactly how to switch it on.
+  - Flagged that the 774-LGA dataset should be checked against INEC's register.

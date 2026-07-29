@@ -1,149 +1,144 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef, memo } from "react";
 import { toast } from "sonner";
+import { Chrome, Eye, Loader2, Lock, Mail, ShieldCheck, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ShieldCheck, Chrome, Loader2, Lock, Mail, UserCheck } from "lucide-react";
+import { DigitsLockup } from "@/components/brand/DigitsLogo";
+import { SiteFooter } from "@/components/site/SiteFooter";
 import { ROLE_META, ROLES } from "@/lib/roles";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "Sign in — DIGITS Control Center" },
-      { name: "description", content: "Sign in to the DIGITS Control Center. Email or Google login." },
+      { title: "Sign in — DIGITs Election Watch" },
+      {
+        name: "description",
+        content:
+          "Sign in to comment on live feeds, file i-Witness evidence, or reach the DIGITs Command Center. Watching the platform never requires an account.",
+      },
+      { name: "robots", content: "noindex, follow" },
     ],
   }),
   component: AuthPage,
 });
 
 /* -------------------------------------------------------------------------- */
-/* Interactive Canvas Background with Particle Grid & Emerald/Gold Orbs */
+/* Ambient particle field                                                      */
 /* -------------------------------------------------------------------------- */
-const InteractiveAuthBackground = memo(function InteractiveAuthBackground() {
+const AuthBackdrop = memo(function AuthBackdrop() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
 
-    let animationFrameId: number;
-    let width = (canvas.width = canvas.parentElement?.clientWidth || window.innerWidth);
-    let height = (canvas.height = canvas.parentElement?.clientHeight || window.innerHeight);
+    // Respect the OS motion preference — no animation loop at all if reduced.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const handleResize = () => {
-      if (!canvas) return;
-      width = canvas.width = canvas.parentElement?.clientWidth || window.innerWidth;
-      height = canvas.height = canvas.parentElement?.clientHeight || window.innerHeight;
+    let frame = 0;
+    let width = (canvas.width = canvas.parentElement?.clientWidth ?? window.innerWidth);
+    let height = (canvas.height = canvas.parentElement?.clientHeight ?? window.innerHeight);
+
+    const onResize = () => {
+      width = canvas.width = canvas.parentElement?.clientWidth ?? window.innerWidth;
+      height = canvas.height = canvas.parentElement?.clientHeight ?? window.innerHeight;
     };
-    window.addEventListener("resize", handleResize);
+    window.addEventListener("resize", onResize);
 
-    const particles: Array<{
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      size: number;
-      color: string;
-    }> = [];
+    const palette = ["rgba(0,135,81,0.42)", "rgba(224,181,68,0.32)", "rgba(120,180,255,0.22)"];
+    const particles = Array.from({ length: 42 }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: (Math.random() - 0.5) * 0.55,
+      vy: (Math.random() - 0.5) * 0.55,
+      size: Math.random() * 2.4 + 1,
+      color: palette[Math.floor(Math.random() * palette.length)],
+    }));
 
-    const colors = ["rgba(0, 135, 81, 0.4)", "rgba(212, 175, 55, 0.3)", "rgba(16, 185, 129, 0.3)"];
-    for (let i = 0; i < 45; i++) {
-      particles.push({
-        x: Math.random() * width,
-        y: Math.random() * height,
-        vx: (Math.random() - 0.5) * 0.6,
-        vy: (Math.random() - 0.5) * 0.6,
-        size: Math.random() * 2.5 + 1,
-        color: colors[Math.floor(Math.random() * colors.length)],
-      });
-    }
-
-    let mouseX = width / 2;
-    let mouseY = height / 2;
-
-    const handleMouseMove = (e: MouseEvent) => {
+    let pointerX = width / 2;
+    let pointerY = height / 2;
+    const onPointerMove = (e: PointerEvent) => {
       const rect = canvas.getBoundingClientRect();
-      mouseX = e.clientX - rect.left;
-      mouseY = e.clientY - rect.top;
+      pointerX = e.clientX - rect.left;
+      pointerY = e.clientY - rect.top;
     };
-    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("pointermove", onPointerMove);
 
     const render = () => {
       ctx.clearRect(0, 0, width, height);
 
-      // Draw subtle connections
       for (let i = 0; i < particles.length; i++) {
-        const p1 = particles[i];
-        p1.x += p1.vx;
-        p1.y += p1.vy;
-
-        if (p1.x < 0 || p1.x > width) p1.vx *= -1;
-        if (p1.y < 0 || p1.y > height) p1.vy *= -1;
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > width) p.vx *= -1;
+        if (p.y < 0 || p.y > height) p.vy *= -1;
 
         ctx.beginPath();
-        ctx.arc(p1.x, p1.y, p1.size, 0, Math.PI * 2);
-        ctx.fillStyle = p1.color;
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
         ctx.fill();
 
         for (let j = i + 1; j < particles.length; j++) {
-          const p2 = particles[j];
-          const dx = p1.x - p2.x;
-          const dy = p1.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-
-          if (dist < 110) {
+          const q = particles[j];
+          const dist = Math.hypot(p.x - q.x, p.y - q.y);
+          if (dist < 108) {
             ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(0, 135, 81, ${0.15 * (1 - dist / 110)})`;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x, q.y);
+            ctx.strokeStyle = `rgba(0,135,81,${0.16 * (1 - dist / 108)})`;
             ctx.lineWidth = 0.8;
             ctx.stroke();
           }
         }
 
-        // Mouse proximity reaction
-        const mdx = p1.x - mouseX;
-        const mdy = p1.y - mouseY;
-        const mdist = Math.sqrt(mdx * mdx + mdy * mdy);
-        if (mdist < 140) {
+        const pointerDist = Math.hypot(p.x - pointerX, p.y - pointerY);
+        if (pointerDist < 140) {
           ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(mouseX, mouseY);
-          ctx.strokeStyle = `rgba(212, 175, 55, ${0.2 * (1 - mdist / 140)})`;
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(pointerX, pointerY);
+          ctx.strokeStyle = `rgba(224,181,68,${0.22 * (1 - pointerDist / 140)})`;
           ctx.lineWidth = 1;
           ctx.stroke();
         }
       }
 
-      animationFrameId = requestAnimationFrame(render);
+      frame = requestAnimationFrame(render);
     };
 
-    render();
+    // Stop the loop entirely while the tab is hidden.
+    const onVisibility = () => {
+      cancelAnimationFrame(frame);
+      if (!document.hidden) frame = requestAnimationFrame(render);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    frame = requestAnimationFrame(render);
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-      window.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(animationFrameId);
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("visibilitychange", onVisibility);
     };
   }, []);
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      <div className="absolute -top-32 -left-32 w-96 h-96 bg-emerald-600/15 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute -bottom-32 -right-32 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "2s" }} />
-      <canvas ref={canvasRef} className="w-full h-full block opacity-70" />
+    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
+      <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary/12 blur-3xl" />
+      <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
+      <canvas ref={canvasRef} className="block h-full w-full opacity-70" />
     </div>
   );
 });
 
 /* -------------------------------------------------------------------------- */
-/* Isolated Sign In Form Component */
+/* Forms — memoised and self-contained so keystrokes never re-render the page  */
 /* -------------------------------------------------------------------------- */
 const SignInForm = memo(function SignInForm({ onSuccess }: { onSuccess: () => void }) {
   const [email, setEmail] = useState("");
@@ -155,39 +150,35 @@ const SignInForm = memo(function SignInForm({ onSuccess }: { onSuccess: () => vo
     if (loading) return;
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
       if (error) {
         toast.error(error.message);
-        setLoading(false);
         return;
       }
-      toast.success("Signed in successfully!");
+      toast.success("Welcome back.");
       onSuccess();
-    } catch (err: any) {
-      toast.error(err.message || "Sign in failed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sign in failed.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form onSubmit={handleSignIn} className="space-y-4 pt-2">
+    <form onSubmit={handleSignIn} className="space-y-4 pt-3">
       <div>
-        <Label htmlFor="signin-email" className="text-xs font-semibold text-foreground">
-          Email Address
+        <Label htmlFor="signin-email" className="text-xs font-semibold">
+          Email address
         </Label>
-        <div className="relative mt-1">
-          <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <div className="relative mt-1.5">
+          <Mail className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             id="signin-email"
             type="email"
             required
             autoComplete="email"
-            placeholder="name@example.com"
-            className="pl-9 h-10 bg-background/60"
+            placeholder="you@example.com"
+            className="h-10 bg-background/70 pl-9"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -195,40 +186,37 @@ const SignInForm = memo(function SignInForm({ onSuccess }: { onSuccess: () => vo
       </div>
 
       <div>
-        <Label htmlFor="signin-password" className="text-xs font-semibold text-foreground">
+        <Label htmlFor="signin-password" className="text-xs font-semibold">
           Password
         </Label>
-        <div className="relative mt-1">
-          <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <div className="relative mt-1.5">
+          <Lock className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             id="signin-password"
             type="password"
             required
             autoComplete="current-password"
             placeholder="••••••••"
-            className="pl-9 h-10 bg-background/60"
+            className="h-10 bg-background/70 pl-9"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
       </div>
 
-      <Button type="submit" className="w-full h-10 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all" disabled={loading}>
+      <Button type="submit" className="h-10 w-full font-semibold" disabled={loading}>
         {loading ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Authenticating...
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in…
           </>
         ) : (
-          "Sign In to Control Center"
+          "Sign in"
         )}
       </Button>
     </form>
   );
 });
 
-/* -------------------------------------------------------------------------- */
-/* Isolated Sign Up Form Component */
-/* -------------------------------------------------------------------------- */
 const SignUpForm = memo(function SignUpForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -244,37 +232,36 @@ const SignUpForm = memo(function SignUpForm() {
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/control-center`,
+          emailRedirectTo: `${window.location.origin}/account`,
           data: { full_name: name.trim() },
         },
       });
       if (error) {
         toast.error(error.message);
-        setLoading(false);
         return;
       }
-      toast.success("Verification link sent! Check your inbox.");
-    } catch (err: any) {
-      toast.error(err.message || "Sign up failed");
+      toast.success("Check your inbox for the verification link.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Sign up failed.");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form onSubmit={handleSignUp} className="space-y-4 pt-2">
+    <form onSubmit={handleSignUp} className="space-y-4 pt-3">
       <div>
-        <Label htmlFor="signup-name" className="text-xs font-semibold text-foreground">
-          Full Name
+        <Label htmlFor="signup-name" className="text-xs font-semibold">
+          Full name
         </Label>
-        <div className="relative mt-1">
-          <UserCheck className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <div className="relative mt-1.5">
+          <UserCheck className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             id="signup-name"
             required
             autoComplete="name"
-            placeholder="E.g. Amina Bello"
-            className="pl-9 h-10 bg-background/60"
+            placeholder="e.g. Amina Bello"
+            className="h-10 bg-background/70 pl-9"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -282,18 +269,18 @@ const SignUpForm = memo(function SignUpForm() {
       </div>
 
       <div>
-        <Label htmlFor="signup-email" className="text-xs font-semibold text-foreground">
-          Email Address
+        <Label htmlFor="signup-email" className="text-xs font-semibold">
+          Email address
         </Label>
-        <div className="relative mt-1">
-          <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <div className="relative mt-1.5">
+          <Mail className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             id="signup-email"
             type="email"
             required
             autoComplete="email"
-            placeholder="name@example.com"
-            className="pl-9 h-10 bg-background/60"
+            placeholder="you@example.com"
+            className="h-10 bg-background/70 pl-9"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -301,179 +288,218 @@ const SignUpForm = memo(function SignUpForm() {
       </div>
 
       <div>
-        <Label htmlFor="signup-password" className="text-xs font-semibold text-foreground">
-          Password (min 6 chars)
+        <Label htmlFor="signup-password" className="text-xs font-semibold">
+          Password
         </Label>
-        <div className="relative mt-1">
-          <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <div className="relative mt-1.5">
+          <Lock className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             id="signup-password"
             type="password"
             required
-            minLength={6}
+            minLength={8}
             autoComplete="new-password"
-            placeholder="••••••••"
-            className="pl-9 h-10 bg-background/60"
+            placeholder="At least 8 characters"
+            className="h-10 bg-background/70 pl-9"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
       </div>
 
-      <Button type="submit" className="w-full h-10 font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md transition-all" disabled={loading}>
+      <Button type="submit" className="h-10 w-full font-semibold" disabled={loading}>
         {loading ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating Account...
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating your account…
           </>
         ) : (
-          "Create Account"
+          "Create free account"
         )}
       </Button>
+
+      <p className="text-[11px] leading-relaxed text-muted-foreground">
+        New accounts start as Viewer. Add your NIN in profile settings to unlock i-Witness
+        reporting, and apply for DIGEO accreditation whenever you're ready.
+      </p>
     </form>
   );
 });
 
 /* -------------------------------------------------------------------------- */
-/* Main Auth Page */
-/* -------------------------------------------------------------------------- */
+
 function AuthPage() {
   const navigate = useNavigate();
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  // Already signed in? Send staff to the Command Center, everyone else to their account.
   useEffect(() => {
     let active = true;
-    supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) {
-        navigate({ to: "/control-center" });
-      }
-    });
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!active || !data.session) return;
+
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.session.user.id);
+
+      const staffRoles = new Set([
+        "super_admin",
+        "admin",
+        "control_center_operator",
+        "observer_coordinator",
+        "reviewer",
+      ]);
+      const isStaff = (roles ?? []).some((r) => staffRoles.has(r.role));
+      navigate({ to: isStaff ? "/control-center" : "/account", replace: true });
+    })();
+
     return () => {
       active = false;
     };
-  }, []);
+  }, [navigate]);
 
   async function signInGoogle() {
     setGoogleLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/control-center`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: "offline",
-            prompt: "select_account",
-          },
+          redirectTo: `${window.location.origin}/account`,
+          queryParams: { access_type: "offline", prompt: "select_account" },
         },
       });
       if (error) {
         toast.error(error.message);
         setGoogleLoading(false);
       }
-    } catch (err: any) {
-      toast.error(err.message || "Google auth redirect error");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Google sign-in failed.");
       setGoogleLoading(false);
     }
   }
 
   return (
-    <div className="relative min-h-screen grid md:grid-cols-2 bg-background overflow-hidden">
-      {/* Dynamic Interactive Background */}
-      <InteractiveAuthBackground />
+    <div className="flex min-h-screen flex-col bg-background">
+      <div className="relative grid flex-1 overflow-hidden lg:grid-cols-2">
+        <AuthBackdrop />
 
-      {/* Left Column: Form Card */}
-      <div className="relative z-10 flex flex-col justify-center px-6 py-12 md:px-16">
-        <Link to="/" className="mb-8 inline-flex items-center gap-2.5 font-display text-xl font-bold group">
-          <img src="/favicon.svg" alt="DIGITs Shield Logo" className="h-9 w-9 transition-transform group-hover:scale-105" />
-          <span className="text-foreground tracking-tight">DIGITs <span className="text-emerald-600 dark:text-emerald-400">Nigeria</span></span>
-        </Link>
+        {/* Form column */}
+        <div className="relative z-10 flex flex-col justify-center px-6 py-12 md:px-14">
+          <Link to="/" className="mb-8 inline-flex w-fit" aria-label="DIGITs Election Watch home">
+            <DigitsLockup size={44} priority />
+          </Link>
 
-        <div className="mx-auto w-full max-w-md backdrop-blur-xl bg-card/85 dark:bg-card/75 border border-emerald-500/20 shadow-2xl rounded-2xl p-6 sm:p-8">
-          <div className="space-y-1">
-            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Control Center Portal
+          <div className="glass mx-auto w-full max-w-md rounded-2xl border border-primary/15 p-6 shadow-lifted sm:p-8">
+            <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+              Sign in to take part
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Sign in to manage DIGEO observers, view live streams, and review reports.
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Comment on live feeds, file i-Witness evidence, train as a DIGEO, or open the Command
+              Center.
+            </p>
+
+            <Button
+              onClick={() => void signInGoogle()}
+              variant="outline"
+              disabled={googleLoading}
+              className="mt-6 h-11 w-full font-medium"
+            >
+              {googleLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" />
+              ) : (
+                <Chrome className="mr-2 h-4 w-4 text-primary" />
+              )}
+              Continue with Google
+            </Button>
+
+            <div className="my-5 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              or use email
+              <span className="h-px flex-1 bg-border" />
+            </div>
+
+            <Tabs defaultValue="signin" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-muted/80 p-1">
+                <TabsTrigger value="signin" className="text-xs font-semibold">
+                  Sign in
+                </TabsTrigger>
+                <TabsTrigger value="signup" className="text-xs font-semibold">
+                  Create account
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="signin">
+                <SignInForm onSuccess={() => navigate({ to: "/account" })} />
+              </TabsContent>
+
+              <TabsContent value="signup">
+                <SignUpForm />
+              </TabsContent>
+            </Tabs>
+
+            <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
+              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+              Sessions secured by Supabase Auth. Your NIN is never shown publicly.
             </p>
           </div>
 
-          <Button
-            onClick={signInGoogle}
-            variant="outline"
-            disabled={googleLoading}
-            className="mt-6 w-full h-11 border-emerald-500/30 hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/40 transition-all font-medium"
-          >
-            {googleLoading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin text-emerald-600" />
-            ) : (
-              <Chrome className="mr-2 h-4 w-4 text-emerald-600" />
-            )}
-            Continue with Google OAuth
-          </Button>
-
-          <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="h-px flex-1 bg-border" />
-            <span>OR EMAIL ACCESS</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
-
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-muted/80 p-1">
-              <TabsTrigger value="signin" className="text-xs font-semibold">Sign In</TabsTrigger>
-              <TabsTrigger value="signup" className="text-xs font-semibold">Sign Up</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin">
-              <SignInForm onSuccess={() => navigate({ to: "/control-center" })} />
-            </TabsContent>
-
-            <TabsContent value="signup">
-              <SignUpForm />
-            </TabsContent>
-          </Tabs>
-
-          <div className="mt-6 flex items-center justify-center gap-1.5 text-center text-xs text-muted-foreground">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-            <span>Protected by DIGITS Security Protocol & Supabase Auth</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column: Roles & Capabilities Panel */}
-      <div className="relative z-10 hidden overflow-y-auto border-l border-emerald-500/10 bg-secondary/30 backdrop-blur-md px-8 py-12 md:flex flex-col justify-center">
-        <div className="mx-auto max-w-md space-y-6">
-          <div>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-              Role-Based Security
+          <p className="mx-auto mt-6 flex max-w-md items-center gap-2 text-xs text-muted-foreground">
+            <Eye className="h-3.5 w-3.5 shrink-0" />
+            <span>
+              You don't need this to watch.{" "}
+              <Link to="/live" className="font-semibold text-primary hover:underline">
+                Open the live grid
+              </Link>{" "}
+              without an account.
             </span>
-            <h2 className="mt-3 font-display text-2xl font-bold tracking-tight">Platform Roles & Capabilities</h2>
-            <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-              New accounts start with <strong>Viewer</strong> access. Control Center Super Admins can assign DIGEO Observer, Media Operator, and Admin roles.
-            </p>
-          </div>
-
-          <div className="space-y-3.5">
-            {ROLES.map((r) => (
-              <Card key={r} className="p-4 border-emerald-500/15 bg-card/60 backdrop-blur-xs hover:border-emerald-500/30 transition-all">
-                <div className="font-semibold text-sm text-foreground flex items-center justify-between">
-                  <span>{ROLE_META[r].label}</span>
-                  <span className="text-[10px] text-emerald-600 font-mono font-normal uppercase tracking-wider">{r}</span>
-                </div>
-                <div className="mt-1 text-xs text-muted-foreground">{ROLE_META[r].description}</div>
-                <ul className="mt-2.5 space-y-1 text-xs text-muted-foreground">
-                  {ROLE_META[r].capabilities.map((c) => (
-                    <li key={c} className="flex items-center gap-1.5">
-                      <span className="h-1 w-1 rounded-full bg-emerald-500" />
-                      {c}
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            ))}
-          </div>
+          </p>
         </div>
+
+        {/* Roles column */}
+        <aside className="relative z-10 hidden flex-col justify-center overflow-y-auto border-l bg-secondary/40 px-8 py-12 lg:flex">
+          <div className="scroll-slim mx-auto max-w-md space-y-5">
+            <div>
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/12 px-3 py-1 text-xs font-semibold text-primary">
+                Role-based access
+              </span>
+              <h2 className="mt-3 font-display text-2xl font-bold tracking-tight">
+                Seven roles, enforced in the database
+              </h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                Every account starts as <strong>Viewer</strong>. Roles are granted by a Super Admin,
+                and the rules live in row-level security — not just in the interface.
+              </p>
+            </div>
+
+            <ul className="space-y-3">
+              {ROLES.map((role) => (
+                <li key={role} className="plate p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-semibold">{ROLE_META[role].label}</span>
+                    <code className="text-[10px] uppercase tracking-wider text-primary">
+                      {role}
+                    </code>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {ROLE_META[role].description}
+                  </p>
+                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    {ROLE_META[role].capabilities.map((capability) => (
+                      <li key={capability} className="flex items-start gap-1.5">
+                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
+                        {capability}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
       </div>
+
+      <SiteFooter />
     </div>
   );
 }

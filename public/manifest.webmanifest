@@ -1,0 +1,44 @@
+{
+  "name": "DIGITs Election Watch",
+  "short_name": "DIGITs",
+  "description": "Live observer feeds from Nigerian polling units, verified i-Witness reports, and accredited DIGEO observer training. Watching is free and needs no account.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#0a1f3a",
+  "theme_color": "#0a1f3a",
+  "lang": "en-NG",
+  "dir": "ltr",
+  "categories": ["news", "government", "utilities"],
+  "icons": [
+    { "src": "/brand/digits-logo-64.png", "sizes": "64x64", "type": "image/png" },
+    { "src": "/brand/digits-logo-128.png", "sizes": "128x128", "type": "image/png" },
+    { "src": "/brand/digits-logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/brand/digits-logo-256.png", "sizes": "256x256", "type": "image/png" },
+    { "src": "/brand/digits-logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/brand/digits-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Watch live grid",
+      "short_name": "Watch live",
+      "url": "/live",
+      "icons": [{ "src": "/brand/digits-logo-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "File an i-Witness report",
+      "short_name": "Report",
+      "url": "/i-witness",
+      "icons": [{ "src": "/brand/digits-logo-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Command Center",
+      "short_name": "Command",
+      "url": "/control-center",
+      "icons": [{ "src": "/brand/digits-logo-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

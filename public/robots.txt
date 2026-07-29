@@ -1,21 +1,18 @@
-# DIGITs Nigeria Election Watch - Citizen Transparency & Election Monitoring Platform
-# https://digits-naija-election-watch.org
-
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
+# DIGITs Nigeria Election Watch — citizen election observation platform
+# Public pages are open to crawlers. The Command Center and personal account
+# areas are not: they hold evidence and identity data.
 
 User-agent: *
 Allow: /
-Disallow: /control-center/settings
-Disallow: /api/private
+Allow: /live
+Allow: /i-witness
+Allow: /features
+Allow: /how-it-works
+Allow: /get-involved
+Allow: /about
+Allow: /contact
+Disallow: /control-center
+Disallow: /account
+Disallow: /auth
 
-Sitemap: https://digits-naija-election-watch.org/sitemap.xml
+Sitemap: https://digits-election-watch.org/sitemap.xml

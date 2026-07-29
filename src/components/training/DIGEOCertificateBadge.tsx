@@ -1,102 +1,147 @@
-import { Award, ShieldCheck, Download, CheckCircle2, X, QrCode } from "lucide-react";
+import { Award, CheckCircle2, Printer, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { DigitsMark } from "@/components/brand/DigitsLogo";
 
 interface DIGEOCertificateBadgeProps {
   fullName: string;
   state: string;
+  lga?: string | null;
   certificateNumber: string;
+  issuedAt?: string;
+  averageScore?: number | null;
+  qrHash?: string;
   onClose: () => void;
 }
 
+/**
+ * Printable accreditation certificate. The verification block carries the
+ * certificate number and a truncated hash rather than the holder's identity, so
+ * a photograph of the badge cannot leak personal data.
+ */
 export function DIGEOCertificateBadge({
   fullName,
   state,
+  lga,
   certificateNumber,
+  issuedAt,
+  averageScore,
+  qrHash,
   onClose,
 }: DIGEOCertificateBadgeProps) {
-  const handlePrint = () => {
-    window.print();
-    toast.success("Preparing official DIGEO Observer Certificate for printing...");
-  };
+  const issued = issuedAt ? new Date(issuedAt) : new Date();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md overflow-y-auto">
-      <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border-2 border-amber-500/40 bg-card text-card-foreground shadow-2xl my-8">
-        {/* Header Bar */}
-        <div className="flex items-center justify-between border-b px-6 py-3 bg-emerald-950 text-white">
-          <div className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-amber-400" />
-            <span className="font-display text-sm font-bold">DIGEO Official Certification Badge</span>
-          </div>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-400 hover:bg-emerald-900 hover:text-white">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="DIGEO accreditation certificate"
+      className="fixed inset-0 z-50 overflow-y-auto bg-navy-deep/85 p-3 backdrop-blur-md sm:p-6"
+    >
+      <div className="print-plate mx-auto my-4 w-full max-w-3xl overflow-hidden rounded-2xl border-2 border-brand-gold/40 bg-card shadow-lifted">
+        <header className="no-print flex items-center justify-between gap-3 bg-navy-panel px-5 py-3 text-white">
+          <h2 className="flex items-center gap-2 font-display text-sm font-bold">
+            <Award className="h-4.5 w-4.5 text-brand-gold" />
+            DIGEO accreditation certificate
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-lg p-1 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+          >
             <X className="h-5 w-5" />
           </button>
-        </div>
+        </header>
 
-        {/* Printable Certificate Body */}
-        <div className="p-8 sm:p-12 space-y-8 bg-gradient-to-b from-emerald-950/5 via-background to-amber-500/5 relative">
-          {/* Certificate Watermark Background */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-5 pointer-events-none">
-            <img src="/favicon.svg" alt="Watermark" className="h-96 w-96" />
+        <div className="relative overflow-hidden bg-linear-to-b from-primary/4 via-background to-accent/6 p-8 sm:p-12">
+          {/* Watermark */}
+          <div
+            className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04]"
+            aria-hidden
+          >
+            <DigitsMark size={420} />
           </div>
 
-          {/* Top Crest */}
-          <div className="text-center space-y-2 relative z-10">
-            <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-300 px-4 py-1.5 rounded-full border border-emerald-300 dark:border-emerald-800 text-xs font-bold uppercase tracking-widest">
-              <ShieldCheck className="h-4 w-4 text-emerald-600" />
-              Federal Republic of Nigeria · Election Observation Network
+          <div className="relative space-y-8">
+            <div className="space-y-3 text-center">
+              <DigitsMark size={64} className="mx-auto" priority />
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/8 px-4 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                Federal Republic of Nigeria · Citizen observation network
+              </span>
+              <h1 className="font-display text-2xl font-extrabold tracking-tight sm:text-4xl">
+                Certificate of Accreditation
+              </h1>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+                DIGITs Trained Election Observer
+              </p>
             </div>
-            <h1 className="font-display text-2xl sm:text-4xl font-extrabold text-foreground tracking-tight">
-              CERTIFICATE OF ACCREDITATION
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground uppercase tracking-widest">
-              DIGITs Trained Election Observer (DIGEO)
+
+            <div className="space-y-4 border-y border-primary/15 py-8 text-center">
+              <p className="text-xs italic text-muted-foreground">This certifies that</p>
+              <h2 className="animate-sheen bg-clip-text font-display text-2xl font-extrabold text-primary underline decoration-brand-gold decoration-2 underline-offset-8 sm:text-4xl">
+                {fullName}
+              </h2>
+              <p className="mx-auto max-w-xl text-xs leading-relaxed sm:text-sm">
+                has completed the full DIGEO curriculum — electoral law and observer rights, BVAS
+                accreditation verification, result and Form EC8A arithmetic, evidence handling,
+                conduct and safety, and live broadcast — and is accredited to observe elections in{" "}
+                <strong>
+                  {lga ? `${lga} LGA, ` : ""}
+                  {state}
+                </strong>
+                .
+              </p>
+
+              {typeof averageScore === "number" && averageScore > 0 && (
+                <Badge className="gap-1 bg-primary/15 text-primary">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Average assessment score {averageScore}%
+                </Badge>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <div className="space-y-1">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Accreditation number
+                </p>
+                <p className="font-display text-sm font-bold">{certificateNumber}</p>
+                <p className="text-[10px] font-semibold text-primary">Status: verified & active</p>
+              </div>
+
+              <div className="space-y-1 text-right">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Issued</p>
+                <p className="text-sm font-semibold">
+                  {issued.toLocaleDateString("en-NG", { dateStyle: "long" })}
+                </p>
+                {qrHash && (
+                  <p className="text-[10px] text-muted-foreground">
+                    Verification hash <code className="font-mono">{qrHash.slice(0, 12)}</code>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="h-1.5 w-full rounded bg-flag-gradient" aria-hidden />
+
+            <p className="text-center text-[10px] text-muted-foreground">
+              Verify this certificate at digits-election-watch.org using the accreditation number
+              above.
             </p>
           </div>
-
-          {/* Recipient Details */}
-          <div className="text-center space-y-4 relative z-10 border-y py-8 border-emerald-500/20">
-            <p className="text-xs text-muted-foreground italic">This certifies that</p>
-            <h2 className="font-display text-2xl sm:text-4xl font-extrabold text-emerald-700 dark:text-emerald-400 underline decoration-amber-500 decoration-2 underline-offset-8">
-              {fullName}
-            </h2>
-            <p className="text-xs sm:text-sm text-foreground max-w-xl mx-auto leading-relaxed">
-              has successfully completed all mandatory training modules on electoral legal frameworks, BVAS protocol monitoring, and real-time incident reporting for <strong className="text-foreground">{state} State</strong>.
-            </p>
-          </div>
-
-          {/* Footer Seals & Verification */}
-          <div className="flex flex-wrap items-center justify-between gap-6 pt-4 relative z-10">
-            <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Accreditation ID</p>
-              <p className="font-mono text-xs font-bold text-foreground">{certificateNumber}</p>
-              <p className="text-[10px] text-emerald-600 font-semibold">Status: VERIFIED & ACTIVE</p>
-            </div>
-
-            <div className="flex items-center gap-3 bg-muted/60 p-3 rounded-xl border">
-              <div className="h-12 w-12 bg-white rounded border grid place-items-center">
-                <QrCode className="h-10 w-10 text-emerald-950" />
-              </div>
-              <div className="text-[11px] space-y-0.5">
-                <p className="font-bold text-foreground">Digital QR Verification</p>
-                <p className="text-muted-foreground">Scan badge to verify authenticity</p>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-between border-t bg-muted/40 p-4">
+        <footer className="no-print flex items-center justify-between gap-3 border-t bg-muted/40 p-4">
           <Button variant="ghost" onClick={onClose}>
             Close
           </Button>
-          <Button onClick={handlePrint} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
-            <Download className="h-4 w-4" />
-            Print / Save Certificate PDF
+          <Button onClick={() => window.print()} className="gap-2">
+            <Printer className="h-4 w-4" />
+            Print or save as PDF
           </Button>
-        </div>
+        </footer>
       </div>
     </div>
   );

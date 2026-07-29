@@ -1,73 +1,102 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { SiteNav } from "@/components/site/SiteNav";
-import { SiteFooter } from "@/components/site/SiteFooter";
-import { LiveVideoGrid } from "@/components/video/LiveVideoGrid";
-import { Radio, ShieldCheck, Info, Sparkles } from "lucide-react";
+import { Info, Radio } from "lucide-react";
+import { SiteLayout } from "@/components/site/SiteLayout";
 import { Badge } from "@/components/ui/badge";
+import { LiveVideoGrid } from "@/components/video/LiveVideoGrid";
+import { LiveChatPanel } from "@/components/live/LiveChatPanel";
+import { useBroadcastState } from "@/hooks/useLiveStreams";
 
 export const Route = createFileRoute("/live")({
-  component: PublicLiveBroadcastPage,
+  head: () => ({
+    meta: [
+      { title: "Live observer grid — DIGITs Election Watch" },
+      {
+        name: "description",
+        content:
+          "Watch up to six live feeds from accredited DIGEO observers at Nigerian polling units, curated in real time by the DIGITs Command Center. Free, no account required.",
+      },
+      { property: "og:title", content: "Live observer grid — DIGITs Election Watch" },
+      {
+        property: "og:description",
+        content: "Six live tiles from Nigerian polling units, curated by the Command Center.",
+      },
+    ],
+  }),
+  component: LivePage,
 });
 
-function PublicLiveBroadcastPage() {
-  return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <SiteNav />
+function LivePage() {
+  const { data: state } = useBroadcastState();
 
-      <main className="flex-1 px-4 py-8 max-w-7xl mx-auto w-full space-y-6">
-        {/* Header Hero Banner */}
-        <div className="rounded-2xl border bg-gradient-to-r from-emerald-950 via-slate-900 to-emerald-950 p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-8 -mr-8 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-          
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
-            <div className="space-y-2 max-w-2xl">
-              <div className="flex items-center gap-2">
-                <Badge className="bg-red-600 text-white font-bold px-3 py-1 flex items-center gap-1.5 animate-pulse">
-                  <Radio className="h-4 w-4" />
-                  REAL-TIME PUBLIC BROADCAST
+  return (
+    <SiteLayout>
+      {/* Ticker */}
+      {state?.ticker_message && (
+        <div className="marquee-mask overflow-hidden border-b bg-navy-deep py-2 text-white">
+          <div className="animate-ticker flex w-max gap-12 whitespace-nowrap text-xs font-medium">
+            {[0, 1].map((copy) => (
+              <span key={copy} className="flex items-center gap-12" aria-hidden={copy === 1}>
+                <span className="flex items-center gap-2">
+                  <Radio className="h-3.5 w-3.5 text-live" />
+                  {state.ticker_message}
+                </span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8">
+        <header className="relative overflow-hidden rounded-2xl bg-navy-panel p-6 text-white shadow-lifted sm:p-8">
+          <div className="bg-weave absolute inset-0" aria-hidden />
+          <div className="relative flex flex-wrap items-start justify-between gap-6">
+            <div className="max-w-2xl space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="animate-live-ring gap-1.5 bg-live font-bold text-white">
+                  <Radio className="h-3.5 w-3.5" />
+                  Public broadcast
                 </Badge>
-                <Badge variant="outline" className="text-emerald-300 border-emerald-500/40 bg-emerald-950/40">
-                  DIGEO Network 🇳🇬
+                <Badge variant="outline" className="border-white/25 bg-white/5 text-emerald-300">
+                  DIGEO observer network
                 </Badge>
               </div>
 
-              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight font-display text-white">
-                Live Election Observer Video Grid
+              <h1 className="font-display text-display-sm font-extrabold">
+                {state?.headline ?? "Live from polling units across Nigeria"}
               </h1>
 
-              <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                Direct live video streams broadcasted from trained DIGEO Election Observers at Polling Units across Nigeria. Approved in real-time from our Central Control Center.
+              <p className="text-sm leading-relaxed text-white/70">
+                Feeds come straight from accredited DIGEO observers in the field. A Command Center
+                operator decides which ones reach this grid — nothing here is unreviewed, and
+                nothing is edited.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 bg-slate-900/80 p-4 rounded-xl border border-slate-800 backdrop-blur-xs">
-              <div className="space-y-1 text-center sm:text-left">
-                <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">Live Split Display</p>
-                <p className="text-xs text-emerald-400 flex items-center justify-center sm:justify-start gap-1 font-medium">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Select 1, 2, 3, 4, 5, or 6 Split Tiles
-                </p>
-              </div>
+            <div className="rounded-xl border border-white/15 bg-white/5 p-4 text-xs backdrop-blur-sm">
+              <p className="font-semibold uppercase tracking-wider text-white/60">Grid controls</p>
+              <ul className="mt-2 space-y-1 text-white/75">
+                <li>· Pick 1–6 tiles in the toolbar</li>
+                <li>· Maximise any tile, Esc to exit</li>
+                <li>· Audio starts muted on every tile</li>
+              </ul>
             </div>
           </div>
+        </header>
+
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+          <LiveVideoGrid />
+          <LiveChatPanel channel="public-live" />
         </div>
 
-        {/* Informational Alert Banner */}
-        <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/30 p-4 text-emerald-900 dark:text-emerald-200">
-          <Info className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-          <div className="text-xs sm:text-sm space-y-1">
-            <p className="font-semibold">Interactive Video Grid Features:</p>
-            <p className="text-emerald-800 dark:text-emerald-300">
-              Click or tap on any video tile to <strong>Maximize to Fullscreen</strong>. Use the split view toolbar below to customize your observer monitoring matrix in real-time.
-            </p>
-          </div>
-        </div>
-
-        {/* Live Video Grid Component */}
-        <LiveVideoGrid initialTileCount={4} />
-      </main>
-
-      <SiteFooter />
-    </div>
+        <aside className="flex items-start gap-3 rounded-xl border border-primary/25 bg-primary/5 p-4 text-sm">
+          <Info className="mt-0.5 h-4.5 w-4.5 shrink-0 text-primary" />
+          <p className="text-muted-foreground">
+            <strong className="text-foreground">Watching is open to everyone.</strong> You only need
+            an account to join the conversation or to file your own i-Witness evidence — everything
+            else on this page works without signing in.
+          </p>
+        </aside>
+      </div>
+    </SiteLayout>
   );
 }

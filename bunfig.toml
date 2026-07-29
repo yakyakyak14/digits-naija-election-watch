@@ -1,4 +1,0 @@
-[install]
-saveTextLockfile = true
-minimumReleaseAge = 86400
-minimumReleaseAgeExcludes = []

@@ -1,291 +1,589 @@
-import { useState } from "react";
-import { BookOpen, CheckCircle2, Award, PlayCircle, HelpCircle, ShieldCheck, ArrowRight, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  Award,
+  BookOpen,
+  CheckCircle2,
+  CircleDot,
+  ClipboardList,
+  HelpCircle,
+  Loader2,
+  RotateCcw,
+  Sparkles,
+  XCircle,
+} from "lucide-react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { DIGEOCertificateBadge } from "./DIGEOCertificateBadge";
-import { toast } from "sonner";
+import { DigeoApplicationForm } from "@/components/forms/DigeoApplicationForm";
+import { useViewer } from "@/hooks/useViewer";
+import {
+  getMyCertificate,
+  issueCertificate,
+  listModules,
+  listMyProgress,
+  parseKeyPoints,
+  parseQuiz,
+  recordAttempt,
+  type TrainingModule,
+} from "@/lib/training";
+import { cn } from "@/lib/utils";
 
-export interface TrainingModule {
-  id: string;
-  number: number;
-  title: string;
-  category: string;
-  durationMinutes: number;
-  summary: string;
-  contentMarkdown: string;
-  quiz: {
-    question: string;
-    options: string[];
-    correctIndex: number;
-  };
+type Tab = "curriculum" | "application";
+
+/** Renders **bold** spans without pulling in a markdown runtime. */
+function inline(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).map((part, idx) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={idx} className="font-semibold text-foreground">
+        {part.slice(2, -2)}
+      </strong>
+    ) : (
+      part
+    ),
+  );
 }
 
-const DIGEO_MODULES: TrainingModule[] = [
-  {
-    id: "mod-1",
-    number: 1,
-    title: "Electoral Act 2022 & DIGEO Rights",
-    category: "Legal Framework",
-    durationMinutes: 15,
-    summary: "Understanding observer legal protections, access to polling units, and statutory boundaries.",
-    contentMarkdown: `### Module 1: Electoral Act 2022 & Observer Rights
+/**
+ * Module body renderer. Content is authored as a small fixed subset of markdown
+ * (headings, lists, tables, bold, block quotes) in the curriculum migration, so
+ * it is formatted here rather than shipping a full markdown parser to every
+ * visitor.
+ */
+function ModuleBody({ markdown }: { markdown: string }) {
+  const blocks = useMemo(() => markdown.split(/\n\n+/), [markdown]);
 
-As a DIGITs Election Observer (DIGEO), you possess legal rights under Section 43 of the Electoral Act 2022 to observe voting, accreditation, counting, and result declaration.
+  return (
+    <div className="space-y-3">
+      {blocks.map((block, idx) => {
+        const trimmed = block.trim();
 
-Key Conduct Mandates:
-1. Display your official DIGEO accreditation badge prominently.
-2. Do not interfere with INEC officials, voters, or security personnel.
-3. Record real-time video/photo evidence from an unobtrusive distance.
-4. Report incidents immediately using the DIGITs i-Witness recorder.`,
-    quiz: {
-      question: "Which section of the Electoral Act 2022 covers election observation rights?",
-      options: ["Section 12", "Section 43", "Section 84", "Section 105"],
-      correctIndex: 1,
-    },
-  },
-  {
-    id: "mod-2",
-    number: 2,
-    title: "INEC BVAS Verification & Accreditation Protocol",
-    category: "Technical Observation",
-    durationMinutes: 20,
-    summary: "Monitoring Bimodal Voter Accreditation System (BVAS) operation and voter queue management.",
-    contentMarkdown: `### Module 2: BVAS Verification & Accreditation
+        if (trimmed.startsWith("### ")) {
+          return (
+            <h4 key={idx} className="font-display text-sm font-bold text-foreground">
+              {trimmed.slice(4)}
+            </h4>
+          );
+        }
+        if (trimmed.startsWith("## ")) {
+          return (
+            <h3 key={idx} className="font-display text-base font-bold text-foreground">
+              {trimmed.slice(3)}
+            </h3>
+          );
+        }
+        if (trimmed.startsWith("> ")) {
+          return (
+            <blockquote
+              key={idx}
+              className="border-l-2 border-primary bg-primary/5 py-2 pl-4 text-xs italic text-foreground/90"
+            >
+              {inline(trimmed.replace(/^>\s?/gm, ""))}
+            </blockquote>
+          );
+        }
+        if (trimmed.startsWith("|")) {
+          const rows = trimmed.split("\n").filter((r) => !/^\|[\s|:-]+\|$/.test(r));
+          const [header, ...body] = rows.map((r) =>
+            r
+              .split("|")
+              .slice(1, -1)
+              .map((c) => c.trim()),
+          );
+          return (
+            <div key={idx} className="overflow-x-auto">
+              <table className="w-full border-collapse text-xs">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    {header?.map((cell) => (
+                      <th key={cell} className="p-2 text-left font-semibold">
+                        {cell}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {body.map((row, rowIdx) => (
+                    <tr key={rowIdx} className="border-b last:border-0">
+                      {row.map((cell, cellIdx) => (
+                        <td key={cellIdx} className="p-2 align-top text-muted-foreground">
+                          {inline(cell)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+        if (/^(\d+\.|-)\s/m.test(trimmed)) {
+          const ordered = /^\d+\.\s/.test(trimmed);
+          const items = trimmed.split("\n").map((line) => line.replace(/^(\d+\.|-)\s*/, ""));
+          const ListTag = ordered ? "ol" : "ul";
+          return (
+            <ListTag
+              key={idx}
+              className={cn(
+                "space-y-1.5 pl-5 text-xs text-muted-foreground",
+                ordered ? "list-decimal" : "list-disc",
+              )}
+            >
+              {items.map((item, itemIdx) => (
+                <li key={itemIdx}>{inline(item)}</li>
+              ))}
+            </ListTag>
+          );
+        }
 
-The Bimodal Voter Accreditation System (BVAS) is critical for voter authentication.
-
-Key Monitoring Steps:
-1. Verify BVAS zero-print certificate at 8:30 AM before voting commences.
-2. Monitor facial and fingerprint scanning protocols.
-3. Track manual accreditation fallbacks (which require form EC8A entry).
-4. Record any BVAS battery or network failure incidents via live stream.`,
-    quiz: {
-      question: "When should the BVAS zero-print certificate be verified by observers?",
-      options: ["After polls close", "At 8:30 AM before voting begins", "During counting", "At night"],
-      correctIndex: 1,
-    },
-  },
-  {
-    id: "mod-3",
-    number: 3,
-    title: "Ballot Counting & EC8A Result Verification",
-    category: "Result Transparency",
-    durationMinutes: 25,
-    summary: "Verifying result counting, Form EC8A signatures, and IReV upload confirmation.",
-    contentMarkdown: `### Module 3: Ballot Counting & Form EC8A Verification
-
-Form EC8A is the primary polling unit result document.
-
-Key Verification Guidelines:
-1. Ensure all party agents sign Form EC8A.
-2. Compare physical vote tallies against recorded figures on Form EC8A.
-3. Take a clear photograph of Form EC8A and upload via the DIGITs app.
-4. Verify immediate upload of Form EC8A to the INEC Result Viewing (IReV) portal.`,
-    quiz: {
-      question: "What is the primary document used to record polling unit election results?",
-      options: ["Form EC40G", "Form EC8A", "Form EC25B", "Form EC9"],
-      correctIndex: 1,
-    },
-  },
-];
+        return (
+          <p key={idx} className="text-xs leading-relaxed text-muted-foreground">
+            {inline(trimmed)}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 export function DIGEOTrainingCenter() {
-  const [activeModule, setActiveModule] = useState<TrainingModule>(DIGEO_MODULES[0]);
-  const [completedModuleIds, setCompletedModuleIds] = useState<string[]>(["mod-1"]);
-  const [selectedQuizAnswers, setSelectedQuizAnswers] = useState<Record<string, number>>({});
+  const { user, displayName, profile, isSignedIn } = useViewer();
+  const qc = useQueryClient();
+
+  const [tab, setTab] = useState<Tab>("curriculum");
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [result, setResult] = useState<{ score: number; passed: boolean } | null>(null);
+  const [grading, setGrading] = useState(false);
+  const [claiming, setClaiming] = useState(false);
   const [showCertificate, setShowCertificate] = useState(false);
 
-  const isCurrentCompleted = completedModuleIds.includes(activeModule.id);
-  const totalModules = DIGEO_MODULES.length;
-  const progressPercent = Math.round((completedModuleIds.length / totalModules) * 100);
+  const modulesQuery = useQuery({
+    queryKey: ["digeo-modules"],
+    queryFn: listModules,
+    staleTime: 300_000,
+  });
+  const progressQuery = useQuery({
+    queryKey: ["digeo-progress", user?.id],
+    queryFn: listMyProgress,
+    enabled: Boolean(user?.id),
+  });
+  const certificateQuery = useQuery({
+    queryKey: ["digeo-certificate", user?.id],
+    queryFn: getMyCertificate,
+    enabled: Boolean(user?.id),
+  });
 
-  const handleSelectAnswer = (moduleNum: string, optionIdx: number) => {
-    setSelectedQuizAnswers((prev) => ({ ...prev, [moduleNum]: optionIdx }));
-  };
+  const modules = modulesQuery.data ?? [];
+  const progress = progressQuery.data ?? [];
+  const active: TrainingModule | null =
+    modules.find((m) => m.id === activeId) ?? modules[0] ?? null;
 
-  const handleCompleteModule = () => {
-    const selectedIdx = selectedQuizAnswers[activeModule.id];
-    if (selectedIdx === undefined) {
-      toast.error("Please answer the module quiz question before completing.");
+  const completedIds = useMemo(
+    () => new Set(progress.filter((p) => p.status === "completed").map((p) => p.module_id)),
+    [progress],
+  );
+  const percentComplete = modules.length
+    ? Math.round((completedIds.size / modules.length) * 100)
+    : 0;
+  const allComplete = modules.length > 0 && completedIds.size === modules.length;
+
+  const averageScore = useMemo(() => {
+    const scores = progress.filter((p) => p.status === "completed").map((p) => p.quiz_score ?? 0);
+    return scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  }, [progress]);
+
+  const quiz = active ? parseQuiz(active) : [];
+  const keyPoints = active ? parseKeyPoints(active) : [];
+  const activeProgress = progress.find((p) => p.module_id === active?.id);
+  const activeComplete = active ? completedIds.has(active.id) : false;
+
+  function selectModule(id: string) {
+    setActiveId(id);
+    setAnswers({});
+    setResult(null);
+  }
+
+  async function submitQuiz() {
+    if (!active || quiz.length === 0 || grading) return;
+    if (Object.keys(answers).length < quiz.length) {
+      toast.error("Answer every question before submitting.");
       return;
     }
 
-    if (selectedIdx !== activeModule.quiz.correctIndex) {
-      toast.error("Incorrect answer. Please review the module material and try again.");
-      return;
-    }
+    setGrading(true);
+    try {
+      const correct = quiz.reduce(
+        (sum, q, idx) => sum + (answers[idx] === q.correctIndex ? 1 : 0),
+        0,
+      );
+      const score = Math.round((correct / quiz.length) * 100);
+      const passMark = active.pass_mark ?? 70;
 
-    if (!completedModuleIds.includes(activeModule.id)) {
-      const nextCompleted = [...completedModuleIds, activeModule.id];
-      setCompletedModuleIds(nextCompleted);
-      toast.success(`Module ${activeModule.number} passed & completed successfully!`);
+      const outcome = await recordAttempt({
+        moduleId: active.id,
+        score,
+        passMark,
+        answers: Object.fromEntries(Object.entries(answers).map(([k, v]) => [String(k), v])),
+      });
 
-      if (nextCompleted.length === totalModules) {
-        setShowCertificate(true);
-        toast.success("Congratulations! You have completed all DIGEO training modules. Certificate issued!", {
-          duration: 6000,
-        });
-      }
+      setResult({ score, passed: outcome.passed });
+      await progressQuery.refetch();
+
+      if (outcome.passed) toast.success(`Module ${active.module_number} passed with ${score}%.`);
+      else
+        toast.error(`${score}% — you need ${passMark}% to pass. Review the module and try again.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not record your attempt.");
+    } finally {
+      setGrading(false);
     }
-  };
+  }
+
+  async function claimCertificate() {
+    if (claiming) return;
+    setClaiming(true);
+    try {
+      await issueCertificate({
+        fullName: displayName,
+        state: profile?.state ?? "Nigeria",
+        lga: profile?.lga ?? null,
+        averageScore,
+      });
+      await certificateQuery.refetch();
+      qc.invalidateQueries({ queryKey: ["digeo-certificate"] });
+      setShowCertificate(true);
+      toast.success("Certificate issued.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not issue the certificate.");
+    } finally {
+      setClaiming(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-6 shadow-xs">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h1 className="font-display text-2xl font-bold">DIGEO Training & Certification Academy</h1>
-            <Badge className="bg-emerald-600 text-white font-semibold">Official Curriculum</Badge>
+      <header className="plate flex flex-wrap items-center justify-between gap-4 p-6">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="font-display text-xl font-bold sm:text-2xl">DIGEO academy</h1>
+            <Badge className="bg-primary/15 text-primary">Official curriculum</Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Complete all 3 modules to receive your accredited DIGEO Election Observer Badge & Certificate.
+          <p className="mt-1.5 max-w-2xl text-sm text-muted-foreground">
+            Six modules, each with an assessment you must pass at {modules[0]?.pass_mark ?? 70}%.
+            Retakes are unlimited. Finish all six to be issued a numbered accreditation certificate.
           </p>
         </div>
 
-        <div className="flex items-center gap-4 bg-muted/50 p-3 rounded-lg border">
-          <div className="space-y-1 text-right">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Overall Progress</p>
-            <p className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">{progressPercent}% Completed</p>
+        <div className="flex items-center gap-4 rounded-xl border bg-muted/40 p-4">
+          <div className="text-right">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              Progress
+            </p>
+            <p className="font-display text-xl font-extrabold text-primary">{percentComplete}%</p>
+            <p className="text-[10px] text-muted-foreground">
+              {completedIds.size}/{modules.length} modules
+            </p>
           </div>
-          <div className="h-10 w-24">
-            <Progress value={progressPercent} className="h-3" />
+          <div className="w-24">
+            <Progress value={percentComplete} className="h-2.5" />
           </div>
         </div>
+      </header>
+
+      <div
+        role="tablist"
+        aria-label="Academy sections"
+        className="flex gap-1 rounded-lg bg-muted p-1"
+      >
+        {[
+          { id: "curriculum" as Tab, label: "Curriculum & assessments", icon: BookOpen },
+          { id: "application" as Tab, label: "Accreditation application", icon: ClipboardList },
+        ].map((entry) => (
+          <button
+            key={entry.id}
+            role="tab"
+            aria-selected={tab === entry.id}
+            onClick={() => setTab(entry.id)}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-2 rounded-md px-3 py-2 text-xs font-semibold transition-colors",
+              tab === entry.id
+                ? "bg-background text-foreground shadow-xs"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            <entry.icon className="h-3.5 w-3.5" />
+            {entry.label}
+          </button>
+        ))}
       </div>
 
-      {/* Main Module Layout */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Module Selection Navigation */}
-        <div className="space-y-3">
-          <h2 className="font-display text-sm font-bold uppercase tracking-wider text-muted-foreground px-1">
-            Training Modules ({completedModuleIds.length}/{totalModules})
-          </h2>
+      {tab === "application" ? (
+        isSignedIn ? (
+          <DigeoApplicationForm />
+        ) : (
+          <div className="plate p-10 text-center">
+            <ClipboardList className="mx-auto h-8 w-8 text-muted-foreground" />
+            <p className="mt-3 font-display text-sm font-semibold">Sign in to apply</p>
+            <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
+              You can read the whole curriculum without an account. Applying for accreditation needs
+              one.
+            </p>
+          </div>
+        )
+      ) : (
+        <div className="grid gap-6 lg:grid-cols-[19rem_minmax(0,1fr)]">
+          <nav aria-label="Training modules" className="space-y-2">
+            {modulesQuery.isLoading && (
+              <p className="text-sm text-muted-foreground">Loading curriculum…</p>
+            )}
 
-          <div className="space-y-2">
-            {DIGEO_MODULES.map((mod) => {
-              const isDone = completedModuleIds.includes(mod.id);
-              const isActive = activeModule.id === mod.id;
+            {modules.map((module) => {
+              const done = completedIds.has(module.id);
+              const isActive = active?.id === module.id;
+              const attempt = progress.find((p) => p.module_id === module.id);
+
               return (
                 <button
-                  key={mod.id}
-                  onClick={() => setActiveModule(mod)}
-                  className={`w-full text-left p-4 rounded-xl border transition-all ${
+                  key={module.id}
+                  onClick={() => selectModule(module.id)}
+                  aria-current={isActive}
+                  className={cn(
+                    "w-full rounded-xl border p-4 text-left transition-colors",
                     isActive
-                      ? "border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/40 shadow-xs"
-                      : "bg-card hover:bg-muted/40"
-                  }`}
+                      ? "border-primary bg-primary/6 shadow-xs"
+                      : "bg-card hover:bg-accent/10",
+                  )}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                      Module {mod.number} · {mod.category}
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-primary">
+                      Module {module.module_number} · {module.category}
                     </span>
-                    {isDone ? (
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                    {done ? (
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
                     ) : (
-                      <Badge variant="outline" className="text-[10px]">
-                        {mod.durationMinutes} mins
-                      </Badge>
+                      <CircleDot className="h-4 w-4 shrink-0 text-muted-foreground" />
                     )}
                   </div>
-                  <h3 className="font-bold text-sm text-foreground line-clamp-1">{mod.title}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{mod.summary}</p>
+                  <h3 className="mt-1 text-sm font-bold leading-snug">{module.title}</h3>
+                  <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">
+                    {module.description}
+                  </p>
+                  <p className="mt-1.5 text-[10px] text-muted-foreground">
+                    {module.duration_minutes} min
+                    {attempt?.quiz_score ? ` · best ${attempt.quiz_score}%` : ""}
+                    {attempt?.attempts
+                      ? ` · ${attempt.attempts} attempt${attempt.attempts > 1 ? "s" : ""}`
+                      : ""}
+                  </p>
                 </button>
               );
             })}
-          </div>
 
-          {/* Certificate Trigger Button */}
-          {completedModuleIds.length === totalModules && (
-            <Button
-              onClick={() => setShowCertificate(true)}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white gap-2 font-semibold shadow-md py-5"
-            >
-              <Award className="h-5 w-5" />
-              View Official DIGEO Certificate
-            </Button>
-          )}
-        </div>
-
-        {/* Module Content & Quiz Section */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="p-6 space-y-6">
-            <div className="flex items-center justify-between border-b pb-4">
-              <div>
-                <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950 dark:text-emerald-300 mb-2">
-                  Module {activeModule.number} of {totalModules}
-                </Badge>
-                <h2 className="font-display text-xl font-bold">{activeModule.title}</h2>
+            {allComplete && (
+              <div className="rounded-xl border border-accent/50 bg-accent/10 p-4 text-center">
+                <Sparkles className="mx-auto h-6 w-6 text-accent-foreground dark:text-accent" />
+                <p className="mt-2 text-xs font-bold">All six modules complete</p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  Average score {Math.round(averageScore)}%.
+                </p>
+                {certificateQuery.data ? (
+                  <Button
+                    size="sm"
+                    className="mt-3 w-full gap-1.5"
+                    onClick={() => setShowCertificate(true)}
+                  >
+                    <Award className="h-4 w-4" />
+                    View certificate
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="mt-3 w-full gap-1.5"
+                    disabled={claiming}
+                    onClick={() => void claimCertificate()}
+                  >
+                    {claiming ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Award className="h-4 w-4" />
+                    )}
+                    Claim certificate
+                  </Button>
+                )}
               </div>
+            )}
+          </nav>
 
-              {isCurrentCompleted && (
-                <Badge className="bg-emerald-600 text-white font-semibold flex items-center gap-1">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Module Completed
-                </Badge>
+          {active && (
+            <div className="space-y-5">
+              <article className="plate space-y-5 p-6">
+                <header className="flex flex-wrap items-start justify-between gap-3 border-b pb-4">
+                  <div>
+                    <Badge className="mb-2 bg-primary/12 text-primary">
+                      Module {active.module_number} of {modules.length}
+                    </Badge>
+                    <h2 className="font-display text-lg font-bold sm:text-xl">{active.title}</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">{active.description}</p>
+                  </div>
+                  {activeComplete && (
+                    <Badge className="gap-1 bg-primary text-primary-foreground">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Passed {activeProgress?.quiz_score}%
+                    </Badge>
+                  )}
+                </header>
+
+                {keyPoints.length > 0 && (
+                  <ul className="grid gap-2 rounded-xl bg-muted/40 p-4 sm:grid-cols-2">
+                    {keyPoints.map((point) => (
+                      <li key={point} className="flex items-start gap-2 text-xs">
+                        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                        <span className="text-muted-foreground">{point}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <ModuleBody markdown={active.content_markdown} />
+              </article>
+
+              {quiz.length > 0 && (
+                <section className="plate space-y-5 p-6">
+                  <header className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="flex items-center gap-2 font-display text-sm font-bold">
+                      <HelpCircle className="h-4 w-4 text-primary" />
+                      Assessment · {quiz.length} questions · pass at {active.pass_mark ?? 70}%
+                    </h3>
+                    {result && (
+                      <Badge
+                        className={
+                          result.passed
+                            ? "gap-1 bg-primary text-primary-foreground"
+                            : "gap-1 bg-destructive text-destructive-foreground"
+                        }
+                      >
+                        {result.passed ? (
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        ) : (
+                          <XCircle className="h-3.5 w-3.5" />
+                        )}
+                        {result.score}%
+                      </Badge>
+                    )}
+                  </header>
+
+                  <ol className="space-y-5">
+                    {quiz.map((question, qIdx) => {
+                      const chosen = answers[qIdx];
+                      const revealed = result !== null;
+
+                      return (
+                        <li key={qIdx} className="space-y-2">
+                          <p className="text-xs font-semibold">
+                            <span className="mr-1.5 text-muted-foreground">{qIdx + 1}.</span>
+                            {question.question}
+                          </p>
+
+                          <div className="space-y-1.5">
+                            {question.options.map((option, oIdx) => {
+                              const isChosen = chosen === oIdx;
+                              const isCorrect = question.correctIndex === oIdx;
+
+                              return (
+                                <button
+                                  key={oIdx}
+                                  type="button"
+                                  disabled={revealed}
+                                  onClick={() => setAnswers((a) => ({ ...a, [qIdx]: oIdx }))}
+                                  className={cn(
+                                    "flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-xs transition-colors",
+                                    revealed &&
+                                      isCorrect &&
+                                      "border-primary bg-primary/10 font-semibold",
+                                    revealed &&
+                                      isChosen &&
+                                      !isCorrect &&
+                                      "border-destructive bg-destructive/8",
+                                    !revealed &&
+                                      isChosen &&
+                                      "border-primary bg-primary/8 font-semibold",
+                                    !revealed &&
+                                      !isChosen &&
+                                      "hover:border-primary/40 hover:bg-accent/10",
+                                  )}
+                                >
+                                  <span>{option}</span>
+                                  {revealed && isCorrect && (
+                                    <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                                  )}
+                                  {revealed && isChosen && !isCorrect && (
+                                    <XCircle className="h-4 w-4 shrink-0 text-destructive" />
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {revealed && question.explanation && (
+                            <p className="rounded-lg bg-muted/50 p-2.5 text-[11px] leading-relaxed text-muted-foreground">
+                              {question.explanation}
+                            </p>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ol>
+
+                  <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                    <p className="text-[11px] text-muted-foreground">
+                      {Object.keys(answers).length}/{quiz.length} answered
+                    </p>
+                    {result ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setAnswers({});
+                          setResult(null);
+                        }}
+                        className="gap-2"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        {result.passed ? "Review again" : "Retake assessment"}
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => void submitQuiz()}
+                        disabled={grading || !isSignedIn}
+                        className="gap-2"
+                      >
+                        {grading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="h-4 w-4" />
+                        )}
+                        {isSignedIn ? "Submit assessment" : "Sign in to be graded"}
+                      </Button>
+                    )}
+                  </div>
+                </section>
               )}
             </div>
-
-            {/* Reading Content */}
-            <div className="prose prose-sm dark:prose-invert max-w-none space-y-3 leading-relaxed text-slate-700 dark:text-slate-300">
-              <div className="bg-muted/40 p-4 rounded-lg border whitespace-pre-line text-sm">
-                {activeModule.contentMarkdown}
-              </div>
-            </div>
-
-            {/* Assessment Quiz */}
-            <div className="rounded-xl border bg-secondary/30 p-5 space-y-4">
-              <div className="flex items-center gap-2 font-display text-sm font-bold text-foreground">
-                <HelpCircle className="h-4 w-4 text-emerald-600" />
-                Module Assessment Quiz
-              </div>
-
-              <p className="text-xs sm:text-sm font-semibold text-foreground">{activeModule.quiz.question}</p>
-
-              <div className="space-y-2">
-                {activeModule.quiz.options.map((opt, oIdx) => {
-                  const isSelected = selectedQuizAnswers[activeModule.id] === oIdx;
-                  return (
-                    <button
-                      key={oIdx}
-                      onClick={() => handleSelectAnswer(activeModule.id, oIdx)}
-                      className={`w-full text-left px-4 py-3 rounded-lg text-xs sm:text-sm font-medium border transition-all flex items-center justify-between ${
-                        isSelected
-                          ? "border-emerald-500 bg-emerald-100/60 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-200 font-bold"
-                          : "bg-background hover:bg-accent text-foreground"
-                      }`}
-                    >
-                      <span>{opt}</span>
-                      <span className={`h-4 w-4 rounded-full border flex items-center justify-center ${isSelected ? "border-emerald-600 bg-emerald-600 text-white" : ""}`}>
-                        {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <Button
-                  onClick={handleCompleteModule}
-                  disabled={isCurrentCompleted}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-                >
-                  {isCurrentCompleted ? "Completed" : "Submit Quiz & Complete Module"}
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </Card>
+          )}
         </div>
-      </div>
+      )}
 
-      {/* Certificate Modal */}
-      {showCertificate && (
+      {showCertificate && certificateQuery.data && (
         <DIGEOCertificateBadge
-          fullName="Chukwuemeka Dan"
-          state="Lagos"
-          certificateNumber="DIGEO-2026-9814"
+          fullName={certificateQuery.data.full_name}
+          state={certificateQuery.data.state}
+          lga={certificateQuery.data.lga}
+          certificateNumber={certificateQuery.data.certificate_number}
+          issuedAt={certificateQuery.data.issued_at}
+          averageScore={certificateQuery.data.average_score}
+          qrHash={certificateQuery.data.qr_code_hash}
           onClose={() => setShowCertificate(false)}
         />
       )}

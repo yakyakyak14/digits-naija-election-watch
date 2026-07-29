@@ -10,7 +10,10 @@ export const ROLES = [
 
 export type AppRole = (typeof ROLES)[number];
 
-export const ROLE_META: Record<AppRole, { label: string; description: string; capabilities: string[] }> = {
+export const ROLE_META: Record<
+  AppRole,
+  { label: string; description: string; capabilities: string[] }
+> = {
   super_admin: {
     label: "Super Admin",
     description: "Full platform control. Only one or two people should hold this role.",
@@ -69,7 +72,7 @@ export const ROLE_META: Record<AppRole, { label: string; description: string; ca
   },
 };
 
-/** Roles that grant Control Center access. */
+/** Roles that grant Control Center access. Mirrors public.is_staff() in the database. */
 export const CONTROL_CENTER_ROLES: AppRole[] = [
   "super_admin",
   "admin",
@@ -78,12 +81,26 @@ export const CONTROL_CENTER_ROLES: AppRole[] = [
   "reviewer",
 ];
 
+/** Roles that may curate the public 1–6 grid. Mirrors public.is_broadcast_operator(). */
+export const BROADCAST_ROLES: AppRole[] = ["super_admin", "admin", "control_center_operator"];
+
+/** Roles that may broadcast a camera into the Command Center. */
+export const PUBLISHER_ROLES: AppRole[] = [...BROADCAST_ROLES, "digeo"];
+
 export function hasAnyRole(userRoles: AppRole[], allowed: AppRole[]): boolean {
   return userRoles.some((r) => allowed.includes(r));
 }
 
 export function highestRoleLabel(userRoles: AppRole[]): string {
-  const order: AppRole[] = ["super_admin", "admin", "control_center_operator", "observer_coordinator", "reviewer", "digeo", "viewer"];
+  const order: AppRole[] = [
+    "super_admin",
+    "admin",
+    "control_center_operator",
+    "observer_coordinator",
+    "reviewer",
+    "digeo",
+    "viewer",
+  ];
   for (const r of order) if (userRoles.includes(r)) return ROLE_META[r].label;
   return "Viewer";
 }
