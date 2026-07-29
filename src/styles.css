@@ -282,6 +282,18 @@
   );
 }
 
+/* Fine dot lattice for ambient texture — rasterised once, composited by the GPU. */
+@utility bg-dot-grid {
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    color-mix(in oklab, var(--brand-green) 22%, transparent) 1px,
+    transparent 0
+  );
+  background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent 75%);
+}
+
 @utility glass {
   background-color: color-mix(in oklab, var(--card) 72%, transparent);
   backdrop-filter: blur(14px) saturate(1.4);

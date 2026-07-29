@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useRef, memo } from "react";
+import { useEffect, useState, memo } from "react";
 import { toast } from "sonner";
 import { Chrome, Eye, Loader2, Lock, Mail, ShieldCheck, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,115 +27,29 @@ export const Route = createFileRoute("/auth")({
 });
 
 /* -------------------------------------------------------------------------- */
-/* Ambient particle field                                                      */
+/* Ambient backdrop                                                            */
 /* -------------------------------------------------------------------------- */
-const AuthBackdrop = memo(function AuthBackdrop() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-
-    // Respect the OS motion preference — no animation loop at all if reduced.
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-    let frame = 0;
-    let width = (canvas.width = canvas.parentElement?.clientWidth ?? window.innerWidth);
-    let height = (canvas.height = canvas.parentElement?.clientHeight ?? window.innerHeight);
-
-    const onResize = () => {
-      width = canvas.width = canvas.parentElement?.clientWidth ?? window.innerWidth;
-      height = canvas.height = canvas.parentElement?.clientHeight ?? window.innerHeight;
-    };
-    window.addEventListener("resize", onResize);
-
-    const palette = ["rgba(0,135,81,0.42)", "rgba(224,181,68,0.32)", "rgba(120,180,255,0.22)"];
-    const particles = Array.from({ length: 42 }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      vx: (Math.random() - 0.5) * 0.55,
-      vy: (Math.random() - 0.5) * 0.55,
-      size: Math.random() * 2.4 + 1,
-      color: palette[Math.floor(Math.random() * palette.length)],
-    }));
-
-    let pointerX = width / 2;
-    let pointerY = height / 2;
-    const onPointerMove = (e: PointerEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      pointerX = e.clientX - rect.left;
-      pointerY = e.clientY - rect.top;
-    };
-    window.addEventListener("pointermove", onPointerMove);
-
-    const render = () => {
-      ctx.clearRect(0, 0, width, height);
-
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        if (p.x < 0 || p.x > width) p.vx *= -1;
-        if (p.y < 0 || p.y > height) p.vy *= -1;
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.fill();
-
-        for (let j = i + 1; j < particles.length; j++) {
-          const q = particles[j];
-          const dist = Math.hypot(p.x - q.x, p.y - q.y);
-          if (dist < 108) {
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.lineTo(q.x, q.y);
-            ctx.strokeStyle = `rgba(0,135,81,${0.16 * (1 - dist / 108)})`;
-            ctx.lineWidth = 0.8;
-            ctx.stroke();
-          }
-        }
-
-        const pointerDist = Math.hypot(p.x - pointerX, p.y - pointerY);
-        if (pointerDist < 140) {
-          ctx.beginPath();
-          ctx.moveTo(p.x, p.y);
-          ctx.lineTo(pointerX, pointerY);
-          ctx.strokeStyle = `rgba(224,181,68,${0.22 * (1 - pointerDist / 140)})`;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      }
-
-      frame = requestAnimationFrame(render);
-    };
-
-    // Stop the loop entirely while the tab is hidden.
-    const onVisibility = () => {
-      cancelAnimationFrame(frame);
-      if (!document.hidden) frame = requestAnimationFrame(render);
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-
-    frame = requestAnimationFrame(render);
-
-    return () => {
-      cancelAnimationFrame(frame);
-      window.removeEventListener("resize", onResize);
-      window.removeEventListener("pointermove", onPointerMove);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, []);
-
+/**
+ * Pure CSS. This was a canvas particle field with an O(n^2) connection pass —
+ * ~900 stroke() calls per frame on a full-viewport canvas, plus a
+ * getBoundingClientRect() on every pointer move. It held a core at 100% for as
+ * long as the page was open, and on modest hardware the extra work of a React
+ * keystroke was enough to tip the renderer into "Page Unresponsive" while
+ * typing into the email field.
+ *
+ * Gradients and blurred orbs are rasterised once and composited by the GPU, so
+ * this costs nothing on the main thread and cannot interfere with input.
+ */
+function AuthBackdrop() {
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
-      <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-primary/12 blur-3xl" />
-      <div className="absolute -bottom-32 -right-32 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
-      <canvas ref={canvasRef} className="block h-full w-full opacity-70" />
+      <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-primary/15 blur-3xl" />
+      <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-accent/12 blur-3xl" />
+      <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-brand-green/8 blur-3xl" />
+      <div className="bg-dot-grid absolute inset-0 opacity-60" />
     </div>
   );
-});
+}
 
 /* -------------------------------------------------------------------------- */
 /* Forms — memoised and self-contained so keystrokes never re-render the page  */

@@ -130,3 +130,58 @@ writing anything. Three findings changed the plan:
     transport" until LIVEKIT_URL / LIVEKIT_API_KEY / LIVEKIT_API_SECRET are set, and
     the README says exactly how to switch it on.
   - Flagged that the 774-LGA dataset should be checked against INEC's register.
+
+--------------------------------------------------------------------------------
+[You]
+"Email login typing attempt hangs entire project. See attached screenshot to see
+how much it hangs the device screen. Please fix"
+(screenshot: Chrome "Page Unresponsive" dialog over localhost:5173/auth)
+
+[Me]
+My bug, introduced when I restyled the auth page. The ambient backdrop was a
+canvas particle field:
+
+  - 42 particles with an O(n^2) connection pass -> ~900 stroke() calls per frame
+  - on a full-viewport canvas (~1900x1000 = 1.9M pixels), cleared every frame
+  - plus getBoundingClientRect() on every pointermove (forced layout each time)
+  - running continuously via requestAnimationFrame for as long as the page was open
+
+That holds a CPU core at 100% the whole time the page is open. Add React's
+dev-mode work for a keystroke on top and the renderer misses its deadline long
+enough for Chrome to show "Page Unresponsive" — which is why it surfaced when
+typing into the email field specifically.
+
+Fix: deleted the canvas entirely and rebuilt the backdrop in pure CSS — three
+blurred brand-coloured orbs plus a new `bg-dot-grid` utility (radial-gradient dot
+lattice with a radial mask). Gradients and blurs are rasterised once and
+composited by the GPU, so the page now has ZERO continuous main-thread work and
+cannot interfere with input. Kept the visual intent; dropped the cost.
+
+Verified:
+  grep -rn "requestAnimationFrame" src/     -> no matches
+  grep requestAnimationFrame dist/.../auth-*.js -> 1 hit, and it is Radix Tabs'
+    single self-cancelling mount frame, not a loop
+  auth chunk 19.58 kB -> 17.89 kB
+  npm run typecheck  -> 0 errors
+  npx eslint .       -> 0 errors
+  npm run build      -> ok
+  dev server         -> /auth 200, / 200
+
+Also in this pass: wrote a 30-check RLS verification suite that impersonates anon,
+a signed-in viewer, an admin and the super admin against the live database (each
+check in a transaction that is rolled back). It proves the things I had only
+type-checked before:
+
+  anon reads the grid and the comment thread but cannot insert either
+  a viewer cannot post/file under another account (row-level security blocks it)
+  the 6-per-30s comment rate limit actually fires on the 7th message
+  a viewer cannot verify/publish evidence, read the audit trail, or grant roles
+  an admin cannot mint an admin or a super_admin; the last super_admin is protected
+  the checklist CHECKs reject accredited > registered and votes > accredited
+  the NIN format and uniqueness constraints hold
+  a DIGEO application without all three declarations is rejected
+  both evidence buckets are private
+
+  -> 30 passed, 0 failed
+     (one initial failure was a quoting bug in my own test, not the schema:
+      "Bachelor's degree" in double quotes parsed as an identifier)
