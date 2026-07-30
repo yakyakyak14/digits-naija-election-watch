@@ -4,8 +4,10 @@
  * Actions (staff only, except as noted):
  *   preview  -> returns { subject, html } without sending. Used by the Command
  *               Center preview and to generate the committed sample.
- *   send     -> renders and sends via Resend, then records the send on the
- *               certificate row and in audit_log.
+ *   send     -> renders and sends via Resend, then records the send in
+ *               audit_log. Accepts an optional `deliverTo` so staff can route a
+ *               copy elsewhere (test sends, or a provider that will not yet
+ *               deliver to the holder). The override is always audited.
  *
  * Environment:
  *   RESEND_API_KEY   required to send. Without it, `send` returns 503 and an
@@ -359,12 +361,21 @@ Deno.serve(async (req) => {
     Deno.env.get("DIGEO_MAIL_FROM") ??
     "DIGITs Election Watch <onboarding@resend.dev>";
 
+  // Staff may redirect delivery without changing whose accreditation the email
+  // describes. Recorded below so a redirected send is never mistaken for a
+  // delivery to the holder.
+  const deliverTo =
+    typeof body.deliverTo === "string" && body.deliverTo.includes("@")
+      ? body.deliverTo.trim()
+      : recipient.email;
+  const redirected = deliverTo.toLowerCase() !== recipient.email.toLowerCase();
+
   const send = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from,
-      to: [recipient.email],
+      to: [deliverTo],
       subject: rendered.subject,
       html: rendered.html,
     }),
@@ -382,16 +393,29 @@ Deno.serve(async (req) => {
     action: "digeo.welcome_email",
     entity: "digeo_certificates",
     entity_id: certificate.id,
-    detail: { to: recipient.email, certificate: certificate.certificate_number },
+    detail: {
+      to: deliverTo,
+      holder: recipient.email,
+      redirected,
+      certificate: certificate.certificate_number,
+    },
   });
 
-  await admin.from("notifications").insert({
-    user_id: recipient.id,
-    title: "Welcome email sent",
-    body: `Your DIGEO welcome pack and certificate ${certificate.certificate_number} were emailed to ${recipient.email}.`,
-    kind: "success",
-    link: "/control-center/training",
-  });
+  if (!redirected) {
+    await admin.from("notifications").insert({
+      user_id: recipient.id,
+      title: "Welcome email sent",
+      body: `Your DIGEO welcome pack and certificate ${certificate.certificate_number} were emailed to ${recipient.email}.`,
+      kind: "success",
+      link: "/control-center/training",
+    });
+  }
 
-  return json({ ok: true, to: recipient.email, provider: JSON.parse(sendBody || "{}") });
+  return json({
+    ok: true,
+    to: deliverTo,
+    holder: recipient.email,
+    redirected,
+    provider: JSON.parse(sendBody || "{}"),
+  });
 });

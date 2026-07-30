@@ -86,8 +86,11 @@ silent failure can never be mistaken for a delivered accreditation.
 2. Add `RESEND_API_KEY` and `DIGEO_MAIL_FROM` to `.env`.
 3. `npm run fn:deploy -- --secrets`
 
-Without a verified domain Resend only delivers to the account owner's own address,
-which is enough for testing.
+Without a verified domain Resend only delivers to the account owner's own address.
+For that case the send accepts an optional `deliverTo`, so staff can route a copy
+elsewhere without changing whose accreditation the email describes; redirected
+sends are flagged `redirected: true` in `audit_log` and the holder is not told the
+email reached them.
 
 Operators send from **Command Center → Observers → Observer roster →
 Accreditation & welcome dispatch**, which also previews the exact email and opens
