@@ -12,6 +12,7 @@ import {
   StatTile,
 } from "@/components/control-center/PageHeader";
 import { DeploymentAssignmentForm } from "@/components/forms/DeploymentAssignmentForm";
+import { DigeoDispatchPanel } from "@/components/control-center/DigeoDispatchPanel";
 import { useViewer } from "@/hooks/useViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { grantRole, listUsersWithRoles, writeAudit } from "@/lib/roles.functions";
@@ -367,68 +368,72 @@ function ObserversPage() {
 
       {/* Roster */}
       {tab === "roster" && (
-        <section className="plate overflow-hidden">
-          <div className="border-b p-4">
-            <h2 className="font-display text-base font-bold">Accredited observers</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Accounts holding the DIGEO role. Roles are managed on the Users &amp; roles screen.
-            </p>
-          </div>
+        <div className="space-y-6">
+          <DigeoDispatchPanel />
 
-          {digeos.length === 0 ? (
-            <p className="p-8 text-center text-sm text-muted-foreground">
-              No accredited observers yet. Approve an application to add one.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="border-b bg-muted/40 text-xs text-muted-foreground">
-                  <tr>
-                    <th className="p-3 font-semibold">Observer</th>
-                    <th className="p-3 font-semibold">Locality</th>
-                    <th className="p-3 font-semibold">Identity</th>
-                    <th className="p-3 font-semibold">Last signed in</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {digeos.map((observer) => (
-                    <tr key={observer.id} className="hover:bg-muted/25">
-                      <td className="p-3">
-                        <span className="text-xs font-semibold">{observer.display_name}</span>
-                        <span className="block text-[11px] text-muted-foreground">
-                          {observer.email}
-                        </span>
-                      </td>
-                      <td className="p-3 text-xs text-muted-foreground">
-                        {observer.lga ? `${observer.lga}, ` : ""}
-                        {observer.state ?? "—"}
-                      </td>
-                      <td className="p-3">
-                        {observer.nin_verified ? (
-                          <Badge className="gap-1 bg-primary/15 text-[10px] text-primary">
-                            <BadgeCheck className="h-3 w-3" />
-                            NIN verified
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-[10px]">
-                            NIN on file
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="p-3 text-[11px] text-muted-foreground">
-                        {observer.last_sign_in_at
-                          ? new Date(observer.last_sign_in_at).toLocaleDateString("en-NG", {
-                              dateStyle: "medium",
-                            })
-                          : "Never"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <section className="plate overflow-hidden">
+            <div className="border-b p-4">
+              <h2 className="font-display text-base font-bold">Accredited observers</h2>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Accounts holding the DIGEO role. Roles are managed on the Users &amp; roles screen.
+              </p>
             </div>
-          )}
-        </section>
+
+            {digeos.length === 0 ? (
+              <p className="p-8 text-center text-sm text-muted-foreground">
+                No accredited observers yet. Approve an application to add one.
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b bg-muted/40 text-xs text-muted-foreground">
+                    <tr>
+                      <th className="p-3 font-semibold">Observer</th>
+                      <th className="p-3 font-semibold">Locality</th>
+                      <th className="p-3 font-semibold">Identity</th>
+                      <th className="p-3 font-semibold">Last signed in</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {digeos.map((observer) => (
+                      <tr key={observer.id} className="hover:bg-muted/25">
+                        <td className="p-3">
+                          <span className="text-xs font-semibold">{observer.display_name}</span>
+                          <span className="block text-[11px] text-muted-foreground">
+                            {observer.email}
+                          </span>
+                        </td>
+                        <td className="p-3 text-xs text-muted-foreground">
+                          {observer.lga ? `${observer.lga}, ` : ""}
+                          {observer.state ?? "—"}
+                        </td>
+                        <td className="p-3">
+                          {observer.nin_verified ? (
+                            <Badge className="gap-1 bg-primary/15 text-[10px] text-primary">
+                              <BadgeCheck className="h-3 w-3" />
+                              NIN verified
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px]">
+                              NIN on file
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="p-3 text-[11px] text-muted-foreground">
+                          {observer.last_sign_in_at
+                            ? new Date(observer.last_sign_in_at).toLocaleDateString("en-NG", {
+                                dateStyle: "medium",
+                              })
+                            : "Never"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+        </div>
       )}
     </div>
   );

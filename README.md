@@ -51,6 +51,8 @@ GOOGLE_PLACES_API=<google places key>
 LIVEKIT_URL=wss://<project>.livekit.cloud
 LIVEKIT_API_KEY=<livekit key>
 LIVEKIT_API_SECRET=<livekit secret>
+RESEND_API_KEY=<resend key>                     # required to send DIGEO email
+DIGEO_MAIL_FROM=DIGITs Election Watch <digeo@yourdomain>
 ```
 
 Only `VITE_*` variables reach the browser. `GOOGLE_PLACES_API` and the `LIVEKIT_*`
@@ -72,6 +74,24 @@ To switch it on:
 
 The transport badge on the live grid and the Command Center → Settings page both
 flip to **Connected** with no code change.
+
+### Enabling DIGEO email
+
+Accreditation email is sent by the `send-digeo-welcome` Edge Function, which holds
+the provider key so the browser never can. **Until `RESEND_API_KEY` is set, sending
+returns HTTP 503 with `configured: false` and nothing is sent** — deliberately, so a
+silent failure can never be mistaken for a delivered accreditation.
+
+1. Create a key at [resend.com](https://resend.com) and verify a sending domain.
+2. Add `RESEND_API_KEY` and `DIGEO_MAIL_FROM` to `.env`.
+3. `npm run fn:deploy -- --secrets`
+
+Without a verified domain Resend only delivers to the account owner's own address,
+which is enough for testing.
+
+Operators send from **Command Center → Observers → Observer roster →
+Accreditation & welcome dispatch**, which also previews the exact email and opens
+any observer's certificate. Every send is written to `audit_log`.
 
 ---
 
@@ -148,6 +168,7 @@ Verify the LGA lists against INEC's current register before each election cycle.
 ## Repository layout
 
 ```
+docs/samples/                 rendered welcome email + certificate, openable in a browser
 public/brand/                 generated logo variants, PWA icons, OG card
 scripts/                      Supabase Management API tooling
 src/components/brand/         crest and lockup

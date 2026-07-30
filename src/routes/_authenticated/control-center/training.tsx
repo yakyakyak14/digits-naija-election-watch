@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Award, GraduationCap, Users2 } from "lucide-react";
+import { Award, ChevronDown, ChevronRight, GraduationCap, Users2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { StatTile } from "@/components/control-center/PageHeader";
@@ -8,6 +9,7 @@ import { DIGEOTrainingCenter } from "@/components/training/DIGEOTrainingCenter";
 import { useViewer } from "@/hooks/useViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { listUsersWithRoles } from "@/lib/roles.functions";
+import { listAssessmentResults } from "@/lib/digeo";
 
 export const Route = createFileRoute("/_authenticated/control-center/training")({
   component: TrainingPage,
@@ -18,6 +20,15 @@ export const Route = createFileRoute("/_authenticated/control-center/training")(
  * passed, their average score, and whether a certificate has been issued.
  */
 function TraineeRoster() {
+  const [expanded, setExpanded] = useState<string | null>(null);
+
+  // Per-module assessment detail, so a coordinator can see HOW an accreditation
+  // was earned — score and attempts per module — not just that it was.
+  const results = useQuery({
+    queryKey: ["cc-assessment-results"],
+    queryFn: listAssessmentResults,
+  });
+
   const roster = useQuery({
     queryKey: ["cc-training-roster"],
     queryFn: async () => {
@@ -129,39 +140,100 @@ function TraineeRoster() {
             <tbody className="divide-y">
               {rows.map((row) => {
                 const percent = Math.round((row.completed / Math.max(1, moduleCount)) * 100);
+                const isOpen = expanded === row.id;
+                const modules = results.data?.get(row.id) ?? [];
+
                 return (
-                  <tr key={row.id} className="hover:bg-muted/25">
-                    <td className="p-3">
-                      <span className="text-xs font-semibold">{row.name}</span>
-                      <span className="block text-[11px] text-muted-foreground">{row.email}</span>
-                    </td>
-                    <td className="p-3 text-xs text-muted-foreground">{row.locality}</td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <Progress value={percent} className="h-1.5 w-16" />
-                        <span className="text-[11px] font-semibold">
-                          {row.completed}/{moduleCount}
+                  <>
+                    <tr
+                      key={row.id}
+                      className="cursor-pointer hover:bg-muted/25"
+                      onClick={() => setExpanded(isOpen ? null : row.id)}
+                    >
+                      <td className="p-3">
+                        <span className="flex items-center gap-1.5 text-xs font-semibold">
+                          {modules.length > 0 ? (
+                            isOpen ? (
+                              <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            ) : (
+                              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            )
+                          ) : (
+                            <span className="w-3.5" />
+                          )}
+                          {row.name}
                         </span>
-                      </div>
-                    </td>
-                    <td className="p-3 text-xs font-semibold">
-                      {row.average != null ? `${row.average}%` : "—"}
-                    </td>
-                    <td className="p-3">
-                      {row.certificate ? (
-                        <Badge className="gap-1 bg-primary/15 text-[10px] text-primary">
-                          <Award className="h-3 w-3" />
-                          {row.certificate.certificate_number}
-                        </Badge>
-                      ) : row.isDigeo ? (
-                        <Badge variant="outline" className="text-[10px]">
-                          DIGEO role, no certificate
-                        </Badge>
-                      ) : (
-                        <span className="text-[11px] text-muted-foreground">—</span>
-                      )}
-                    </td>
-                  </tr>
+                        <span className="block pl-5 text-[11px] text-muted-foreground">
+                          {row.email}
+                        </span>
+                      </td>
+                      <td className="p-3 text-xs text-muted-foreground">{row.locality}</td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-2">
+                          <Progress value={percent} className="h-1.5 w-16" />
+                          <span className="text-[11px] font-semibold">
+                            {row.completed}/{moduleCount}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-3 text-xs font-semibold">
+                        {row.average != null ? `${row.average}%` : "—"}
+                      </td>
+                      <td className="p-3">
+                        {row.certificate ? (
+                          <Badge className="gap-1 bg-primary/15 text-[10px] text-primary">
+                            <Award className="h-3 w-3" />
+                            {row.certificate.certificate_number}
+                          </Badge>
+                        ) : row.isDigeo ? (
+                          <Badge variant="outline" className="text-[10px]">
+                            DIGEO role, no certificate
+                          </Badge>
+                        ) : (
+                          <span className="text-[11px] text-muted-foreground">—</span>
+                        )}
+                      </td>
+                    </tr>
+
+                    {isOpen && modules.length > 0 && (
+                      <tr key={`${row.id}-detail`} className="bg-muted/20">
+                        <td colSpan={5} className="p-3">
+                          <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+                            Assessment results by module
+                          </p>
+                          <ul className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
+                            {modules.map((m) => (
+                              <li
+                                key={m.moduleNumber}
+                                className="flex items-start justify-between gap-2 rounded-lg border bg-background px-2.5 py-2"
+                              >
+                                <span className="min-w-0">
+                                  <span className="block text-[11px] font-semibold">
+                                    {m.moduleNumber}. {m.title}
+                                  </span>
+                                  <span className="block text-[10px] text-muted-foreground">
+                                    {m.attempts} attempt{m.attempts === 1 ? "" : "s"}
+                                    {m.completedAt
+                                      ? ` · passed ${new Date(m.completedAt).toLocaleDateString("en-NG", { dateStyle: "medium" })}`
+                                      : " · not passed yet"}
+                                  </span>
+                                </span>
+                                <Badge
+                                  className={
+                                    m.status === "completed"
+                                      ? "shrink-0 bg-primary/15 text-[10px] text-primary"
+                                      : "shrink-0 bg-muted text-[10px] text-muted-foreground"
+                                  }
+                                >
+                                  {m.score ?? 0}%
+                                </Badge>
+                              </li>
+                            ))}
+                          </ul>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 );
               })}
             </tbody>

@@ -1,126 +1,65 @@
 import { Link } from "@tanstack/react-router";
-import { Mail, MapPin, ShieldCheck } from "lucide-react";
 import { DigitsMark } from "@/components/brand/DigitsLogo";
-import { TOTAL_LGAS } from "@/lib/nigeria";
 import { cn } from "@/lib/utils";
 
-const COLUMNS = [
-  {
-    heading: "Watch",
-    links: [
-      { to: "/live", label: "Live observer grid" },
-      { to: "/i-witness", label: "i-Witness reports" },
-      { to: "/features", label: "Platform capabilities" },
-    ],
-  },
-  {
-    heading: "Take part",
-    links: [
-      { to: "/get-involved", label: "Become a DIGEO" },
-      { to: "/how-it-works", label: "How it works" },
-      { to: "/auth", label: "Sign in" },
-    ],
-  },
-  {
-    heading: "Organisation",
-    links: [
-      { to: "/about", label: "About DIGITs" },
-      { to: "/contact", label: "Contact & partnerships" },
-      { to: "/control-center", label: "Command Center" },
-    ],
-  },
+/** One row of essentials. Everything else lives in the nav or on its own page. */
+const LINKS = [
+  { to: "/live", label: "Watch live" },
+  { to: "/i-witness", label: "i-Witness" },
+  { to: "/get-involved", label: "Become a DIGEO" },
+  { to: "/about", label: "About" },
+  { to: "/contact", label: "Contact" },
 ] as const;
 
 /**
- * Global footer. Rendered at the base of every page — public marketing, the live
- * grid, and the Command Center alike — so the build credit and the accountability
- * links are never missing.
+ * Global footer, rendered at the base of every page including the Command Center.
+ *
+ * Kept to a single compact band: a four-column sitemap was repeating the primary
+ * navigation and eating a third of the viewport on short pages.
  */
 export function SiteFooter({ className }: { className?: string }) {
-  const year = new Date().getFullYear();
-
   return (
-    <footer className={cn("mt-auto border-t bg-navy-panel text-white", className)}>
-      <div className="bg-weave">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-2 lg:grid-cols-[1.6fr_repeat(3,1fr)]">
-          <div className="space-y-4">
+    <footer className={cn("mt-auto border-t bg-navy-deep text-white", className)}>
+      <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-5 sm:flex-row sm:justify-between">
+        <Link
+          to="/"
+          className="flex shrink-0 items-center gap-2"
+          aria-label="DIGITs Election Watch home"
+        >
+          <DigitsMark size={26} />
+          <span className="font-display text-sm font-extrabold leading-none">
+            DIGITs<span className="ml-1 text-brand-gold">Election Watch</span>
+          </span>
+        </Link>
+
+        <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
+          {LINKS.map((link) => (
             <Link
-              to="/"
-              className="flex items-center gap-3"
-              aria-label="DIGITs Election Watch home"
+              key={link.to}
+              to={link.to}
+              className="text-xs text-white/60 transition-colors hover:text-white"
             >
-              <DigitsMark size={46} />
-              <span className="font-display text-lg font-extrabold leading-tight">
-                DIGITs
-                <span className="ml-1.5 text-brand-gold">Election Watch</span>
-              </span>
+              {link.label}
             </Link>
-
-            <p className="max-w-sm text-sm leading-relaxed text-white/70">
-              Citizen observation of Nigerian elections, streamed as it happens and verified before
-              it is published. Built for the {TOTAL_LGAS.toLocaleString()} local government areas
-              across 36 states and the Federal Capital Territory.
-            </p>
-
-            <div className="flex flex-wrap gap-4 text-xs text-white/60">
-              <a
-                href="mailto:hello@digits.ng"
-                className="flex items-center gap-1.5 transition-colors hover:text-white"
-              >
-                <Mail className="h-3.5 w-3.5" />
-                hello@digits.ng
-              </a>
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5" />
-                Abuja, Nigeria
-              </span>
-            </div>
-
-            <div className="h-1 w-28 rounded bg-flag-gradient" aria-hidden />
-          </div>
-
-          {COLUMNS.map((column) => (
-            <nav key={column.heading} aria-label={column.heading}>
-              <h2 className="mb-3 text-[11px] font-bold uppercase tracking-[0.16em] text-brand-gold">
-                {column.heading}
-              </h2>
-              <ul className="space-y-2 text-sm text-white/70">
-                {column.links.map((link) => (
-                  <li key={link.to}>
-                    <Link to={link.to} className="transition-colors hover:text-white">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </nav>
           ))}
-        </div>
+        </nav>
 
-        <div className="border-t border-white/10">
-          <div className="mx-auto flex max-w-7xl flex-col items-center gap-4 px-4 py-6 text-center sm:flex-row sm:justify-between sm:text-left">
-            <p className="text-xs text-white/55">
-              © {year} DIGITs Nigeria Election Watch. Independent, non-partisan, citizen-funded.
-            </p>
-
-            <p className="flex items-center gap-1.5 text-xs text-white/55">
-              <ShieldCheck className="h-3.5 w-3.5 text-brand-green-bright" />
-              Evidence retained in a private vault. Never sold, never shared with any party.
-            </p>
-
-            {/* Build credit — required on every page. */}
-            <p className="text-sm text-white/85">
-              Built by{" "}
-              <strong className="animate-float font-extrabold text-brand-green-bright drop-shadow-sm">
-                SirHope
-              </strong>{" "}
-              of{" "}
-              <strong className="animate-float-delay font-extrabold text-brand-gold drop-shadow-sm">
-                WYN-Tech
-              </strong>
-              .
-            </p>
-          </div>
+        <div className="flex flex-col items-center gap-0.5 sm:items-end">
+          {/* Build credit — required on every page. Both names share one colour. */}
+          <p className="text-xs text-white/80">
+            Built by{" "}
+            <strong className="animate-float font-extrabold text-brand-green-bright">
+              SirHope
+            </strong>{" "}
+            of{" "}
+            <strong className="animate-float-delay font-extrabold text-brand-green-bright">
+              WYN-Tech
+            </strong>
+            .
+          </p>
+          <p className="text-[10px] text-white/40">
+            © {new Date().getFullYear()} DIGITs · Independent &amp; non-partisan
+          </p>
         </div>
       </div>
     </footer>
