@@ -273,3 +273,87 @@ Also corrected the two source comments where I had written the wrong cause down 
 fact (auth.tsx and styles.css). Kept both changes — the canvas removal and the
 scoped smooth-scroll are improvements on their own merits — but the comments now
 say what actually happened.
+
+--------------------------------------------------------------------------------
+[You]
+1. "Replace platform logo everywhere with this logo
+   public/main-digits-election-watch-logo.png including website icon"
+2. "Remove all these details from the login page /auth and have them listed out in
+   their respective fields in slides somewhere in the Command Center, so regular
+   site visitors and viewers won't see" (the full seven-role catalogue)
+3. "Centralize and redesign the login page with this in the background shining from
+   top center of the page: reactbits LightRays" (with the exact prop list)
+4. "Push to trigger redeploy"
+
+[Me]
+LOGO
+  Ran a row-density scan over the new 1254x1254 lockup to find where the crest ends
+  and the "DIGITS / ELECTION WATCH" wordmark begins - a clean gap at 73-77% of the
+  trimmed height. Cropped to that gap, keyed the white matte to transparent, and
+  regenerated every asset under public/brand/ using the SAME filenames, so all 16
+  referencing files picked it up with no code change: nav, footer, Command Center
+  sidebar, favicons, apple-touch-icon, PWA + maskable icons, certificate watermark,
+  hero, 404/error pages, OG card.
+  Sizes after palette quantisation: 2-55 KB PNG plus WebP siblings (master 156 KB).
+  The crest-only crop is deliberate: DigitsLockup pairs it with CSS-rendered text,
+  and a baked dark-navy "DIGITS" would disappear against the navy footer, hero and
+  sidebar. Deleted the superseded digits-election-new-logo-png.png.
+
+ROLE CATALOGUE OFF THE LOGIN PAGE
+  Built RoleReferenceSlides - an embla carousel, one slide per role, each showing
+  the label, the database slug, the description, what it can do, which Command
+  Center screens it reaches, and what it can grant. Placed on
+  /control-center/users, where an admin deciding what to grant can actually use it.
+  Replaced the login page's right column with a short public-access list (what is
+  free vs what needs an account) and no privilege detail at all.
+  Verified in a real browser: the rendered page contains none of "Seven roles",
+  "Full platform control", "super_admin", "control_center_operator" or "Runs the
+  live broadcast console". Confirmed in the bundle too - the catalogue is split into
+  roles-*.js and the auth chunk never references it. The only role slugs left in the
+  auth chunk are the five in the staff redirect Set, which is functional code.
+
+CENTRED LOGIN + LIGHT RAYS
+  Rewrote /auth as a single centred column on a navy panel, with the rays shining
+  from top-centre behind everything and a bottom gradient grounding the card.
+  Implemented LightRays as one full-screen WebGL2 fragment shader with the exact
+  prop API requested (raysOrigin, raysColor, raysSpeed, lightSpread, rayLength,
+  followMouse, mouseInfluence, noiseAmount, distortion, pulsating, fadeDistance,
+  saturation) - written directly against WebGL rather than adding a dependency.
+
+  TWO REAL BUGS FOUND BY MEASURING, NOT ASSUMING
+
+  1. Shader never compiled in development. The check reported "vertex shader failed
+     to compile" AND "fragment shader failed to compile", both with an empty info
+     log. I first assumed the headless environment was at fault; a control test
+     compiling a minimal GLSL ES 3.00 shader in the SAME browser succeeded, which
+     killed that excuse. The cause was my own cleanup calling
+     WEBGL_lose_context.loseContext(). getContext() returns the same context object
+     for a given canvas, so losing it poisoned the canvas - and under StrictMode
+     double-invoke the second mount got the dead context and failed every compile.
+     Removed the call; deleting the resources is enough.
+     After: "shader compile errs none", 0 console errors.
+
+  2. Animating it wrecked typing on a software GPU. Measured on this machine
+     (SwiftShader, no hardware acceleration):
+         median keystroke 563 ms, max 3520 ms, 21 long tasks (one 1384 ms)
+     versus 21 ms and zero long tasks with no rays. A GPU-equipped machine would
+     not show this, but plenty of low-end Android devices will - and this is the
+     page whose entire history is "typing freezes".
+     So the component now degrades instead of assuming a GPU:
+       - renders at 0.75x resolution and lets CSS upscale (half the fragments)
+       - detects a software renderer via WEBGL_debug_renderer_info and never starts
+         the loop, painting one static frame instead
+       - a frame-rate watchdog samples the first 30 frames and, if it cannot hold
+         ~45fps, freezes to the last frame permanently
+       - still stops on tab-hide, off-screen (IntersectionObserver) and
+         prefers-reduced-motion; pointer tracking uses a cached rect so it never
+         forces layout
+     Re-measured with the guards in place: median 23 ms, max 83 ms, 0 long tasks,
+     and 1 frame in 500ms confirming the loop correctly stayed off while still
+     painting static rays.
+
+  On hardware with a real GPU the rays animate and follow the pointer as specified;
+  on hardware that cannot afford it they are a static light wash. Either way typing
+  is unaffected.
+
+  Gates: typecheck 0 errors, eslint 0 errors, prettier clean, build succeeded.

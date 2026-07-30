@@ -1,7 +1,16 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, memo } from "react";
 import { toast } from "sonner";
-import { Chrome, Eye, Loader2, Lock, Mail, ShieldCheck, UserCheck } from "lucide-react";
+import {
+  CheckCircle2,
+  Chrome,
+  Eye,
+  Loader2,
+  Lock,
+  Mail,
+  ShieldCheck,
+  UserCheck,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DigitsLockup } from "@/components/brand/DigitsLogo";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { ROLE_META, ROLES } from "@/lib/roles";
+import { LightRays } from "@/components/backgrounds/LightRays";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -26,31 +35,14 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
-/* -------------------------------------------------------------------------- */
-/* Ambient backdrop                                                            */
-/* -------------------------------------------------------------------------- */
-/**
- * Pure CSS. This replaced a canvas particle field that ran an O(n^2) connection
- * pass — ~900 stroke() calls per frame on a full-viewport canvas, plus a
- * getBoundingClientRect() on every pointer move — continuously via
- * requestAnimationFrame. That is a real cost worth removing, but for the record
- * it was NOT the cause of the page freezing on keystrokes: that turned out to be
- * the root route rendering a whole <html> document inside #root. Profiling after
- * this change still showed the freeze; see the root route for the actual fix.
- *
- * Gradients and blurred orbs are rasterised once and composited by the GPU, so
- * this costs nothing on the main thread.
- */
-function AuthBackdrop() {
-  return (
-    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden" aria-hidden>
-      <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full bg-primary/15 blur-3xl" />
-      <div className="absolute -bottom-40 -right-40 h-96 w-96 rounded-full bg-accent/12 blur-3xl" />
-      <div className="absolute left-1/2 top-1/3 h-72 w-72 -translate-x-1/2 rounded-full bg-brand-green/8 blur-3xl" />
-      <div className="bg-dot-grid absolute inset-0 opacity-60" />
-    </div>
-  );
-}
+/** What an account unlocks — deliberately no privilege or role detail. */
+const PUBLIC_ACCESS = [
+  { open: true, label: "Watching is free" },
+  { open: true, label: "Reading the record is free" },
+  { open: true, label: "DIGEO training is free" },
+  { open: false, label: "Commenting needs an account" },
+  { open: false, label: "Reporting needs an account" },
+] as const;
 
 /* -------------------------------------------------------------------------- */
 /* Forms — memoised and self-contained so keystrokes never re-render the page  */
@@ -295,47 +287,78 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <div className="relative grid flex-1 overflow-hidden lg:grid-cols-2">
-        <AuthBackdrop />
+    <div className="flex min-h-screen flex-col bg-navy-deep">
+      {/*
+       * Single centred column. The page used to be a two-column split whose right
+       * half enumerated the role model to anonymous visitors; that reference now
+       * lives in the Command Center. Centring keeps the one thing this page is
+       * for — signing in — at the optical centre.
+       */}
+      <div className="relative flex flex-1 items-center justify-center overflow-hidden px-4 py-14">
+        {/* Rays shine down from the top centre, behind everything. */}
+        <div className="pointer-events-none absolute inset-0 z-0" aria-hidden>
+          <div className="absolute inset-0 bg-navy-panel" />
+          <LightRays
+            raysOrigin="top-center"
+            raysColor="#ffffff"
+            raysSpeed={1}
+            lightSpread={0.5}
+            rayLength={3}
+            followMouse
+            mouseInfluence={0.1}
+            noiseAmount={0}
+            distortion={0}
+            pulsating={false}
+            fadeDistance={1}
+            saturation={1}
+            className="opacity-[0.55] mix-blend-screen"
+          />
+          {/* Grounds the rays so the card never floats on pure black. */}
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-navy-deep to-transparent" />
+        </div>
 
-        {/* Form column */}
-        <div className="relative z-10 flex flex-col justify-center px-6 py-12 md:px-14">
-          <Link to="/" className="mb-8 inline-flex w-fit" aria-label="DIGITs Election Watch home">
-            <DigitsLockup size={44} priority />
+        <div className="relative z-10 w-full max-w-md">
+          <Link
+            to="/"
+            className="mx-auto mb-7 flex w-fit justify-center"
+            aria-label="DIGITs Election Watch home"
+          >
+            <DigitsLockup size={52} tone="light" priority />
           </Link>
 
-          <div className="glass mx-auto w-full max-w-md rounded-2xl border border-primary/15 p-6 shadow-lifted sm:p-8">
-            <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-              Sign in to take part
-            </h1>
-            <p className="mt-1.5 text-sm text-muted-foreground">
-              Comment on live feeds, file i-Witness evidence, train as a DIGEO, or open the Command
-              Center.
-            </p>
+          <div className="glass-dark rounded-2xl border border-white/12 p-6 shadow-lifted sm:p-8">
+            <div className="text-center">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                Sign in to take part
+              </h1>
+              <p className="mt-1.5 text-sm text-white/65">
+                Comment on live feeds, file i-Witness evidence, train as a DIGEO, or open the
+                Command Center.
+              </p>
+            </div>
 
             <Button
               onClick={() => void signInGoogle()}
               variant="outline"
               disabled={googleLoading}
-              className="mt-6 h-11 w-full font-medium"
+              className="mt-6 h-11 w-full border-white/20 bg-white/5 font-medium text-white hover:bg-white/12 hover:text-white"
             >
               {googleLoading ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" />
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <Chrome className="mr-2 h-4 w-4 text-primary" />
+                <Chrome className="mr-2 h-4 w-4" />
               )}
               Continue with Google
             </Button>
 
-            <div className="my-5 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <span className="h-px flex-1 bg-border" />
+            <div className="my-5 flex items-center gap-3 text-[11px] font-semibold uppercase tracking-wider text-white/45">
+              <span className="h-px flex-1 bg-white/15" />
               or use email
-              <span className="h-px flex-1 bg-border" />
+              <span className="h-px flex-1 bg-white/15" />
             </div>
 
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-muted/80 p-1">
+              <TabsList className="grid w-full grid-cols-2 bg-white/8 p-1">
                 <TabsTrigger value="signin" className="text-xs font-semibold">
                   Sign in
                 </TabsTrigger>
@@ -353,65 +376,37 @@ function AuthPage() {
               </TabsContent>
             </Tabs>
 
-            <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-muted-foreground">
-              <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+            <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
+              <ShieldCheck className="h-3.5 w-3.5 text-brand-green-bright" />
               Sessions secured by Supabase Auth. Your NIN is never shown publicly.
             </p>
           </div>
 
-          <p className="mx-auto mt-6 flex max-w-md items-center gap-2 text-xs text-muted-foreground">
+          {/* What an account is and isn't needed for — no privilege detail. */}
+          <ul className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            {PUBLIC_ACCESS.map((item) => (
+              <li key={item.label} className="flex items-center gap-1.5 text-[11px] text-white/55">
+                {item.open ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-brand-green-bright" />
+                ) : (
+                  <Lock className="h-3.5 w-3.5 shrink-0 text-brand-gold" />
+                )}
+                {item.label}
+              </li>
+            ))}
+          </ul>
+
+          <p className="mt-6 flex items-center justify-center gap-2 text-center text-xs text-white/55">
             <Eye className="h-3.5 w-3.5 shrink-0" />
             <span>
               You don't need this to watch.{" "}
-              <Link to="/live" className="font-semibold text-primary hover:underline">
+              <Link to="/live" className="font-semibold text-brand-green-bright hover:underline">
                 Open the live grid
               </Link>{" "}
               without an account.
             </span>
           </p>
         </div>
-
-        {/* Roles column */}
-        <aside className="relative z-10 hidden flex-col justify-center overflow-y-auto border-l bg-secondary/40 px-8 py-12 lg:flex">
-          <div className="scroll-slim mx-auto max-w-md space-y-5">
-            <div>
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/12 px-3 py-1 text-xs font-semibold text-primary">
-                Role-based access
-              </span>
-              <h2 className="mt-3 font-display text-2xl font-bold tracking-tight">
-                Seven roles, enforced in the database
-              </h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                Every account starts as <strong>Viewer</strong>. Roles are granted by a Super Admin,
-                and the rules live in row-level security — not just in the interface.
-              </p>
-            </div>
-
-            <ul className="space-y-3">
-              {ROLES.map((role) => (
-                <li key={role} className="plate p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-semibold">{ROLE_META[role].label}</span>
-                    <code className="text-[10px] uppercase tracking-wider text-primary">
-                      {role}
-                    </code>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {ROLE_META[role].description}
-                  </p>
-                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    {ROLE_META[role].capabilities.map((capability) => (
-                      <li key={capability} className="flex items-start gap-1.5">
-                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary" />
-                        {capability}
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </aside>
       </div>
 
       <SiteFooter />

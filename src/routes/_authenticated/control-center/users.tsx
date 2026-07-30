@@ -22,6 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { EmptyState, PageHeader, Restricted } from "@/components/control-center/PageHeader";
+import { RoleReferenceSlides } from "@/components/control-center/RoleReferenceSlides";
 import { useViewer } from "@/hooks/useViewer";
 import { grantRole, listUsersWithRoles, revokeRole } from "@/lib/roles.functions";
 import { ROLE_META, ROLES, type AppRole } from "@/lib/roles";
@@ -251,6 +252,8 @@ function UsersPage() {
           </Table>
         </div>
       )}
+
+      <RoleReferenceSlides />
     </div>
   );
 }
