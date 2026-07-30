@@ -2,6 +2,7 @@ import { Award, CheckCircle2, Printer, ShieldCheck, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DigitsMark } from "@/components/brand/DigitsLogo";
+import { SITE_HOST } from "@/lib/site";
 
 interface DIGEOCertificateBadgeProps {
   fullName: string;

@@ -13,7 +13,9 @@
     "format": "prettier --write .",
     "db:push": "node scripts/apply-migrations.mjs",
     "db:types": "node scripts/generate-types.mjs",
-    "fn:deploy": "node scripts/deploy-functions.mjs"
+    "fn:deploy": "node scripts/deploy-functions.mjs",
+    "seo": "node scripts/generate-seo.mjs",
+    "domain": "node scripts/set-domain.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
