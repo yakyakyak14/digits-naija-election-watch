@@ -13,6 +13,8 @@
  *   LIVEKIT_API_SECRET    — used by `livekit-token`
  *   RESEND_API_KEY        — used by `send-digeo-welcome`
  *   EMAIL_FROM            — sender for `send-digeo-welcome`
+ *   PUBLIC_SITE_URL       — link base for `send-digeo-welcome`; links are
+ *                           omitted entirely when unset, never guessed
  */
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -26,6 +28,7 @@ const SECRET_NAMES = [
   "RESEND_API_KEY",
   "EMAIL_FROM",
   "DIGEO_MAIL_FROM",
+  "PUBLIC_SITE_URL",
 ];
 
 const { env, ref, token } = await loadEnv();

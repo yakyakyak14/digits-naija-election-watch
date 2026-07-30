@@ -34,10 +34,16 @@ function json(body: unknown, status = 200) {
   });
 }
 
-const SITE = (Deno.env.get("PUBLIC_SITE_URL") ?? "https://digits-election-watch.org").replace(
-  /\/$/,
-  "",
-);
+/*
+ * The public site URL. There is deliberately NO fallback domain: an earlier
+ * version defaulted to a placeholder that does not resolve, so every link in the
+ * email — including "view your certificate" — was dead. When this is unset the
+ * platform-links section is omitted entirely rather than shipping broken links.
+ */
+const SITE = Deno.env.get("PUBLIC_SITE_URL")?.replace(/\/$/, "") || null;
+
+/** Public bucket holding rendered certificates, keyed by accreditation number. */
+const CERT_IMAGE_BASE = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/certificates`;
 
 /** What an observer must physically carry on election day. */
 const KIT_CARRY = [
@@ -74,6 +80,7 @@ function renderEmail(input: {
   qrHash: string;
   averageScore: number | null;
   hasNin: boolean;
+  certificateImageUrl: string;
 }) {
   const issued = new Date(input.issuedAt).toLocaleDateString("en-NG", { dateStyle: "long" });
   const expires = input.expiresAt
@@ -115,8 +122,8 @@ function renderEmail(input: {
         <div style="color:#7a5a12;font-size:13px;line-height:1.55;margin-top:4px;">
           Your National Identity Number is not on your profile yet. i-Witness reporting stays
           locked until it is, because evidence must carry a verified identity.
-          <a href="${SITE}/account" style="color:#0f7a45;font-weight:600;">Add your NIN</a> — it
-          takes a moment and you never type it into a report.
+          ${SITE ? `<a href="${SITE}/account" style="color:#0f7a45;font-weight:600;">Add your NIN</a> — it
+          takes a moment and you never type it into a report.` : "Add it in profile settings — it takes a moment and you never type it into a report."}
         </div>
       </div>
     </td></tr>`;
@@ -195,11 +202,26 @@ function renderEmail(input: {
             <td style="padding:3px 0;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:#41546b;">${input.qrHash.slice(0, 24)}</td>
           </tr>
         </table>
-        <a href="${SITE}/control-center/training" style="display:inline-block;margin-top:16px;background:#0f7a45;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:10px 18px;border-radius:8px;">
+        ${
+          SITE
+            ? `<a href="${SITE}/control-center/training" style="display:inline-block;margin-top:16px;background:#0f7a45;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:10px 18px;border-radius:8px;">
           View &amp; print your certificate
-        </a>
+        </a>`
+            : ""
+        }
       </td></tr>
     </table>
+  </td></tr>
+
+  <!-- The certificate itself. Also attached, so it survives image blocking. -->
+  <tr><td style="padding:18px 28px 0;">
+    <img src="${input.certificateImageUrl}" alt="DIGEO accreditation certificate ${input.certificateNumber}"
+         width="584" style="display:block;width:100%;max-width:584px;height:auto;border:1px solid #e6eaef;border-radius:10px;" />
+    <div style="color:#7c8a9c;font-size:11px;margin-top:7px;">
+      Your certificate is attached to this email as
+      <strong>${input.certificateNumber}.png</strong>. If the image above does not load,
+      open the attachment.
+    </div>
   </td></tr>
 
   ${ninWarning}
@@ -219,8 +241,8 @@ function renderEmail(input: {
     </div>
   </td></tr>
 
-  <!-- Links -->
-  <tr><td style="padding:26px 28px 0;">
+  <!-- Links (only when a real site URL is configured) -->
+  ${SITE ? `<tr><td style="padding:26px 28px 0;">
     <h2 style="margin:0 0 4px;font-size:16px;color:#12243d;font-weight:800;">Everything you need on the platform</h2>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       ${link(`${SITE}/control-center/training`, "DIGEO academy & your certificate", "All six modules, your assessment scores, and the printable certificate.")}
@@ -232,7 +254,7 @@ function renderEmail(input: {
       ${link(`${SITE}/account`, "Your profile & NIN", "Keep your locality and contact details current.")}
       ${link(`${SITE}/contact`, "Observer support", "Deployment questions, or anything blocking you from going live.")}
     </table>
-  </td></tr>
+  </td></tr>` : ""}
 
   <!-- Conduct reminder -->
   <tr><td style="padding:24px 28px 0;">
@@ -334,6 +356,7 @@ Deno.serve(async (req) => {
     qrHash: certificate.qr_code_hash,
     averageScore: certificate.average_score,
     hasNin: Boolean(profile?.nin),
+    certificateImageUrl: `${CERT_IMAGE_BASE}/${certificate.certificate_number}.png`,
   });
 
   if (body.action === "preview") {
@@ -370,6 +393,25 @@ Deno.serve(async (req) => {
       : recipient.email;
   const redirected = deliverTo.toLowerCase() !== recipient.email.toLowerCase();
 
+  // Attach the certificate so it survives image blocking and can be printed.
+  const attachments: Array<{ filename: string; content: string }> = [];
+  try {
+    const image = await fetch(`${CERT_IMAGE_BASE}/${certificate.certificate_number}.png`);
+    if (image.ok) {
+      const bytes = new Uint8Array(await image.arrayBuffer());
+      let binary = "";
+      for (const byte of bytes) binary += String.fromCharCode(byte);
+      attachments.push({
+        filename: `${certificate.certificate_number}.png`,
+        content: btoa(binary),
+      });
+    } else {
+      console.warn("certificate image missing", image.status);
+    }
+  } catch (err) {
+    console.warn("certificate attachment failed", err);
+  }
+
   const send = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
@@ -378,6 +420,7 @@ Deno.serve(async (req) => {
       to: [deliverTo],
       subject: rendered.subject,
       html: rendered.html,
+      ...(attachments.length ? { attachments } : {}),
     }),
   });
 

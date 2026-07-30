@@ -127,8 +127,8 @@ export function DIGEOCertificateBadge({
             <div className="h-1.5 w-full rounded bg-flag-gradient" aria-hidden />
 
             <p className="text-center text-[10px] text-muted-foreground">
-              Verify this certificate at digits-election-watch.org using the accreditation number
-              above.
+              Verify this certificate at digits-election-watch.vercel.app using the accreditation
+              number above.
             </p>
           </div>
         </div>

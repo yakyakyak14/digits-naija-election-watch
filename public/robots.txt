@@ -15,4 +15,4 @@ Disallow: /control-center
 Disallow: /account
 Disallow: /auth
 
-Sitemap: https://digits-election-watch.org/sitemap.xml
+Sitemap: https://digits-election-watch.vercel.app/sitemap.xml

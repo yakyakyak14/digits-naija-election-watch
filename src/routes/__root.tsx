@@ -16,7 +16,7 @@ import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { applyTheme, readStoredTheme } from "@/components/theme/ThemeToggle";
 
 const SITE_NAME = "DIGITs Election Watch";
-const SITE_URL = "https://digits-election-watch.org";
+const SITE_URL = "https://digits-election-watch.vercel.app";
 const TAGLINE = "Nigeria, watched by Nigerians";
 const DESCRIPTION =
   "Live observer feeds from Nigerian polling units, verified citizen i-Witness reports, and accredited DIGEO observer training. Watching is free and needs no account.";
