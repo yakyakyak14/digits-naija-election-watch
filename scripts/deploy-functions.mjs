@@ -11,12 +11,22 @@
  *   LIVEKIT_URL           — used by `livekit-token`
  *   LIVEKIT_API_KEY       — used by `livekit-token`
  *   LIVEKIT_API_SECRET    — used by `livekit-token`
+ *   RESEND_API_KEY        — used by `send-digeo-welcome`
+ *   EMAIL_FROM            — sender for `send-digeo-welcome`
  */
 import fs from "node:fs/promises";
 import path from "node:path";
 import { loadEnv, managementFetch, ROOT } from "./supabase-admin.mjs";
 
-const SECRET_NAMES = ["GOOGLE_PLACES_API", "LIVEKIT_URL", "LIVEKIT_API_KEY", "LIVEKIT_API_SECRET"];
+const SECRET_NAMES = [
+  "GOOGLE_PLACES_API",
+  "LIVEKIT_URL",
+  "LIVEKIT_API_KEY",
+  "LIVEKIT_API_SECRET",
+  "RESEND_API_KEY",
+  "EMAIL_FROM",
+  "DIGEO_MAIL_FROM",
+];
 
 const { env, ref, token } = await loadEnv();
 const args = process.argv.slice(2);

@@ -10,9 +10,10 @@
  * Environment:
  *   RESEND_API_KEY   required to send. Without it, `send` returns 503 and an
  *                    explicit instruction rather than silently pretending.
- *   DIGEO_MAIL_FROM  optional sender, e.g. "DIGITs Election Watch <digeo@yourdomain>".
- *                    Defaults to Resend's onboarding sender, which can only
- *                    deliver to the Resend account owner's own address.
+ *   EMAIL_FROM       optional sender, e.g. "DIGITs Election Watch <info@domain>".
+ *                    DIGEO_MAIL_FROM is accepted as an alias. Defaults to
+ *                    Resend's onboarding sender, which can only deliver to the
+ *                    Resend account owner's own address.
  *   PUBLIC_SITE_URL  optional, used for links. Defaults to the production domain.
  */
 
@@ -352,7 +353,11 @@ Deno.serve(async (req) => {
     );
   }
 
-  const from = Deno.env.get("DIGEO_MAIL_FROM") ?? "DIGITs Election Watch <onboarding@resend.dev>";
+  // EMAIL_FROM is the documented name; DIGEO_MAIL_FROM kept as an alias.
+  const from =
+    Deno.env.get("EMAIL_FROM") ??
+    Deno.env.get("DIGEO_MAIL_FROM") ??
+    "DIGITs Election Watch <onboarding@resend.dev>";
 
   const send = await fetch("https://api.resend.com/emails", {
     method: "POST",
