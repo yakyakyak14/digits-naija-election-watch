@@ -185,3 +185,91 @@ type-checked before:
   -> 30 passed, 0 failed
      (one initial failure was a quoting bug in my own test, not the schema:
       "Bachelor's degree" in double quotes parsed as an identifier)
+
+--------------------------------------------------------------------------------
+[You]
+"Login email field typing attempt still hangs the entire project"
+(second screenshot: "Page Unresponsive" still on localhost:5173/auth)
+
+[Me — correcting myself, then actually measuring]
+My canvas theory was WRONG. Removing it was a legitimate performance win but it
+was never the cause. I stopped guessing and drove a real browser instead
+(puppeteer-core against the installed Chrome, via CDP).
+
+Diagnostic sequence:
+  1. profile-auth.mjs with waitUntil:networkidle2 -> timed out. Suspected a request
+     loop, so counted requests over 8s: 85 total, nothing repeated but a font.
+     No loop. (networkidle2 simply never fires because of the HMR socket.)
+  2. Isolated React from the browser: setting input.value + dispatching a synthetic
+     `input` event took 8 ms. So React, the blurs and the repaint were all innocent.
+     Only a REAL key event froze -> the block is in the browser's event path.
+  3. Removed `scroll-behavior: smooth` from html (caret scroll-into-view suspect).
+     Re-tested: still froze. Also not the cause.
+  4. Neutralised every backdrop-filter and filter on the page. Still froze.
+     Not the blurs either.
+  5. Isolation matrix — injected a bare <input> into document.body on several
+     routes:
+         /auth  #signin-email      FROZE
+         /auth  probe in <body>    FROZE
+         /      probe in <body>    FROZE
+         /contact probe in <body>  FROZE
+     Every page, any input, any keypress. So: global, nothing to do with /auth.
+  6. Attached the CDP debugger BEFORE focusing, fired one key without awaiting the
+     ack, then paused the busy main thread. Got the spinning stack:
+
+         getParentHydrationBoundary
+         getClosestInstanceFromNode
+         dispatchEventForPluginEventSystem
+         dispatchEvent
+         dispatchDiscreteEvent
+
+ROOT CAUSE: the root route set `shellComponent: RootShell`, which renders a full
+`<html><head>…</head><body>…</body></html>` document. But this app mounts
+client-side with `createRoot(document.getElementById("root"))`, so that document
+was being rendered INSIDE `<div id="root">`. The browser discards the invalid
+nested html/head/body, React's tree no longer matches the DOM, and its hydration
+boundary walk — which runs on every discrete event to find the target's fiber —
+never terminates. Hence: any keypress anywhere = frozen renderer.
+
+There was a console warning pointing straight at it the whole time, which I had
+noticed and dismissed as benign:
+  "In HTML, <html> cannot be a child of <div>. This will cause a hydration error."
+
+FIX
+  - removed `shellComponent` from the root route and deleted RootShell
+  - render <HeadContent /> inside RootComponent instead (React 19 hoists title,
+    meta and link into document.head on its own)
+  - dropped <Scripts /> (SSR-only; index.html already loads the entry module)
+  - dropped the duplicate stylesheet <link> — main.tsx imports styles.css
+
+Measured after the fix:
+  /auth #signin-email      OK  89 ms for 5 chars
+  /auth probe in <body>    OK  62 ms
+  /      probe in <body>   OK  43 ms
+  /contact probe in <body> OK  28 ms
+  per-keystroke on the real email field: min 20 / median 21 / max 43 ms
+  long tasks >50ms during typing: 0        idle: 34%
+
+SECOND BUG found while verifying, on /live
+  Console showed:
+    Error: cannot add `postgres_changes` callbacks for realtime:broadcast-state
+           after `subscribe()`
+  /live calls useBroadcastState() and the LiveVideoGrid it renders calls it again.
+  supabase.channel(topic) returns the SAME channel object for a repeated topic, so
+  the second subscriber attached after subscribe() and threw — crashing /live into
+  the root error boundary, which is why /live had lost ALL its route metadata
+  (4 meta tags from index.html, no og:title, no JSON-LD) and why livekit-token and
+  stream_comments were each being requested 8x in 9s (remount loop).
+
+  Fixed by giving every hook instance its own realtime topic via useId() in
+  useLiveStreams, useBroadcastState and useStreamComments. React Query already
+  dedupes the underlying fetch, so an extra channel is the cheap half.
+
+  After: 0 console errors on /live, and its metadata is back —
+    title "Live observer grid — DIGITs Election Watch", og:title, JSON-LD,
+    32 meta in head / 0 in body, single <html>.
+
+Also corrected the two source comments where I had written the wrong cause down as
+fact (auth.tsx and styles.css). Kept both changes — the canvas removal and the
+scoped smooth-scroll are improvements on their own merits — but the comments now
+say what actually happened.

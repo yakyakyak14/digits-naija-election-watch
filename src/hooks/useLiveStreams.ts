@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -35,6 +35,11 @@ async function fetchStreams(scope: "public" | "all"): Promise<LiveStream[]> {
  */
 export function useLiveStreams(scope: "public" | "all" = "public") {
   const qc = useQueryClient();
+  // One topic per hook instance. supabase.channel() is keyed by topic and returns
+  // the SAME channel for a repeated name, so a second component subscribing to a
+  // shared name would call .on() after subscribe() and throw. React Query already
+  // dedupes the underlying fetch, so an extra channel is the cheap half.
+  const topic = useId().replace(/[^a-zA-Z0-9]/g, "");
 
   const query = useQuery({
     queryKey: [...LIVE_STREAM_KEY, scope],
@@ -44,7 +49,7 @@ export function useLiveStreams(scope: "public" | "all" = "public") {
 
   useEffect(() => {
     const channel = supabase
-      .channel(`live-streams-${scope}`)
+      .channel(`live-streams-${scope}-${topic}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "live_streams" }, () => {
         qc.invalidateQueries({ queryKey: [...LIVE_STREAM_KEY, scope] });
       })
@@ -53,7 +58,7 @@ export function useLiveStreams(scope: "public" | "all" = "public") {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [qc, scope]);
+  }, [qc, scope, topic]);
 
   return query;
 }
@@ -61,6 +66,8 @@ export function useLiveStreams(scope: "public" | "all" = "public") {
 /** The operator-controlled public grid layout (tile count, slot assignment, ticker). */
 export function useBroadcastState() {
   const qc = useQueryClient();
+  // Same reason as above: /live renders LiveVideoGrid, and both call this hook.
+  const topic = useId().replace(/[^a-zA-Z0-9]/g, "");
 
   const query = useQuery({
     queryKey: BROADCAST_STATE_KEY,
@@ -74,7 +81,7 @@ export function useBroadcastState() {
 
   useEffect(() => {
     const channel = supabase
-      .channel("broadcast-state")
+      .channel(`broadcast-state-${topic}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "broadcast_state" }, () => {
         qc.invalidateQueries({ queryKey: BROADCAST_STATE_KEY });
       })
@@ -83,7 +90,7 @@ export function useBroadcastState() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [qc]);
+  }, [qc, topic]);
 
   return query;
 }

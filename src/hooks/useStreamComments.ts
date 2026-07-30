@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -13,6 +13,8 @@ const PAGE_SIZE = 60;
  * DOM without bound.
  */
 export function useStreamComments(channel = "public-live") {
+  // Unique realtime topic per panel instance — see useLiveStreams for why.
+  const topic = useId().replace(/[^a-zA-Z0-9]/g, "");
   const [comments, setComments] = useState<StreamComment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export function useStreamComments(channel = "public-live") {
     })();
 
     const realtime = supabase
-      .channel(`stream-comments-${channel}`)
+      .channel(`stream-comments-${channel}-${topic}`)
       .on(
         "postgres_changes",
         {
@@ -85,7 +87,7 @@ export function useStreamComments(channel = "public-live") {
       cancelled = true;
       void supabase.removeChannel(realtime);
     };
-  }, [channel]);
+  }, [channel, topic]);
 
   const post = useCallback(
     async (body: string, author: { name: string; avatar?: string | null }, streamId?: string) => {

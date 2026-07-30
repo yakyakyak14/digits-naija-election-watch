@@ -30,15 +30,16 @@ export const Route = createFileRoute("/auth")({
 /* Ambient backdrop                                                            */
 /* -------------------------------------------------------------------------- */
 /**
- * Pure CSS. This was a canvas particle field with an O(n^2) connection pass —
- * ~900 stroke() calls per frame on a full-viewport canvas, plus a
- * getBoundingClientRect() on every pointer move. It held a core at 100% for as
- * long as the page was open, and on modest hardware the extra work of a React
- * keystroke was enough to tip the renderer into "Page Unresponsive" while
- * typing into the email field.
+ * Pure CSS. This replaced a canvas particle field that ran an O(n^2) connection
+ * pass — ~900 stroke() calls per frame on a full-viewport canvas, plus a
+ * getBoundingClientRect() on every pointer move — continuously via
+ * requestAnimationFrame. That is a real cost worth removing, but for the record
+ * it was NOT the cause of the page freezing on keystrokes: that turned out to be
+ * the root route rendering a whole <html> document inside #root. Profiling after
+ * this change still showed the freeze; see the root route for the actual fix.
  *
  * Gradients and blurred orbs are rasterised once and composited by the GPU, so
- * this costs nothing on the main thread and cannot interfere with input.
+ * this costs nothing on the main thread.
  */
 function AuthBackdrop() {
   return (

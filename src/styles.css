@@ -161,8 +161,24 @@
   }
 
   html {
-    scroll-behavior: smooth;
+    /*
+     * `scroll-behavior: smooth` is deliberately NOT set globally: it turns the
+     * browser's caret scroll-into-view into an animated scroll on every keypress,
+     * and it overrides the scroll behaviour of every nested container whether or
+     * not that suits them. Smooth scrolling is opted into per-element via
+     * `.scroll-smooth` below instead.
+     *
+     * (This was also investigated as a suspect for the keystroke freeze and
+     * cleared — the cause was the root route rendering a nested <html>.)
+     */
     -webkit-text-size-adjust: 100%;
+  }
+
+  /* Opt-in smooth scrolling for anchor jumps, and only when motion is welcome. */
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-smooth {
+      scroll-behavior: smooth;
+    }
   }
 
   body {

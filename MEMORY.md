@@ -20,6 +20,32 @@ secret lives in a **Supabase Edge Function**:
 Deploy them with `npm run fn:deploy`. Do not reintroduce `*.functions.ts` server
 functions unless the deployment model changes.
 
+## Two traps in this codebase — do not reintroduce
+
+**1. No `shellComponent` on the root route.** The app mounts client-side with
+`createRoot(document.getElementById("root"))`, so a shell that renders
+`<html><head><body>` puts a whole document inside a `<div>`. The browser discards
+the invalid nesting, React's tree stops matching the DOM, and
+`getParentHydrationBoundary` — which runs on every discrete event to resolve the
+target's fiber — never terminates. Symptom: **any keypress on any page froze the
+renderer** ("Page Unresponsive"). `<HeadContent />` is rendered inside
+`RootComponent` instead; React 19 hoists `title`/`meta`/`link` into `document.head`
+by itself. `<Scripts />` is SSR-only and not needed — `index.html` loads the entry.
+
+**2. Realtime topics must be unique per hook instance.** `supabase.channel(topic)`
+returns the *same* channel object for a repeated topic, so a second component
+subscribing to a shared name calls `.on()` after `subscribe()` and throws
+`cannot add postgres_changes callbacks ... after subscribe()`. `/live` hit this
+because both `LivePage` and the `LiveVideoGrid` it renders call
+`useBroadcastState()`. The crash landed in the root error boundary, which silently
+stripped that route's metadata. Every realtime hook now appends `useId()` to its
+topic. React Query already dedupes the underlying fetch.
+
+Both were found by driving Chrome over CDP (`puppeteer-core`) — programmatic React
+state updates were fast (8 ms) while real key events wedged, which localised the
+fault to the browser event path, and pausing the busy main thread produced the
+spinning stack. Reach for that rather than guessing at CSS.
+
 ## Stack
 
 - TanStack Router + React 19 + Vite 8, Tailwind CSS v4 with OKLCH tokens
