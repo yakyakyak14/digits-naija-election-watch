@@ -10,11 +10,11 @@ const shaderProps: any = {
   axesHelper: "off",
   brightness: 1.2,
   cAzimuthAngle: 180,
-  cDistance: 4.3,
+  cDistance: 2.29,
   cPolarAngle: 90,
   cameraZoom: 1,
-  color1: "#2bff4f",
-  color2: "#abdbb5",
+  color1: "#84ff42",
+  color2: "#5cdb6f",
   color3: "#4de1d2",
   destination: "onCanvas",
   embedMode: "off",
@@ -29,7 +29,7 @@ const shaderProps: any = {
   positionX: -1.4,
   positionY: 0,
   positionZ: 0,
-  range: "enabled",
+  range: "disabled",
   rangeEnd: 40,
   rangeStart: 0,
   reflection: 0.1,
@@ -47,11 +47,15 @@ const shaderProps: any = {
   wireframe: false,
 };
 
+/**
+ * ShaderGradientBg — Full-page animated 3D WebGL gradient background.
+ * Renders a fixed, full-viewport ShaderGradient canvas behind all content.
+ */
 export const ShaderGradientBg = memo(function ShaderGradientBg({ className }: ShaderGradientBgProps) {
   return (
     <div
       aria-hidden="true"
-      className={`pointer-events-none select-none overflow-hidden ${className || ""}`}
+      className={`fixed inset-0 pointer-events-none select-none z-0 ${className || ""}`}
     >
       <ShaderGradientCanvas
         style={{
