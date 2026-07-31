@@ -1,5 +1,6 @@
 import React, { memo } from "react";
 import { cn } from "@/lib/utils";
+import { ShaderGradientBg } from "./ShaderGradientBg";
 
 interface SideRaysProps {
   className?: string;
@@ -8,8 +9,8 @@ interface SideRaysProps {
 
 /**
  * SideRays Component (ReactBits Side Rays background)
- * Projects single-side light beams from the top-right corner downward into the page layout.
- * Opacity increased by 30% from previous levels for vibrant, balanced visibility.
+ * Projects single-side light beams from the top-right corner downward into the page layout,
+ * enhanced with the animated 3D WebGL ShaderGradient mesh (#2bff4f, #abdbb5, #4de1d2).
  */
 export const SideRays = memo(function SideRays({ className, intensity = 0.65 }: SideRaysProps) {
   return (
@@ -20,22 +21,25 @@ export const SideRays = memo(function SideRays({ className, intensity = 0.65 }: 
         className
       )}
     >
-      {/* ----------------- TOP RIGHT RAYS (+30% INTENSITY) ----------------- */}
+      {/* ----------------- TOP RIGHT RAYS WITH SHADER GRADIENT ----------------- */}
       <div className="absolute -top-12 -right-12 w-[650px] h-[650px] sm:w-[850px] sm:h-[850px] lg:w-[1100px] lg:h-[1100px] opacity-45 dark:opacity-60 mix-blend-screen transition-opacity duration-700">
         {/* Soft Radial Ambient Glow */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-emerald-500/20 via-emerald-600/08 to-transparent blur-3xl" />
 
+        {/* 3D WebGL ShaderGradient Canvas */}
+        <ShaderGradientBg className="absolute inset-0 opacity-80 mix-blend-screen rounded-full overflow-hidden blur-xl" />
+
         {/* Conic Ray Beams */}
         <div
-          className="absolute inset-0 origin-top-right animate-pulse-slow"
+          className="absolute inset-0 origin-top-right animate-pulse-slow pointer-events-none"
           style={{
             background: `conic-gradient(from 245deg at 100% 0%, 
               transparent 0deg, 
-              rgba(0, 135, 81, ${0.13 * intensity}) 12deg, 
+              rgba(43, 255, 79, ${0.13 * intensity}) 12deg, 
               transparent 22deg, 
               rgba(16, 185, 129, ${0.16 * intensity}) 35deg, 
               transparent 48deg, 
-              rgba(212, 175, 55, ${0.10 * intensity}) 58deg, 
+              rgba(77, 225, 210, ${0.10 * intensity}) 58deg, 
               transparent 72deg, 
               rgba(0, 135, 81, ${0.12 * intensity}) 84deg, 
               transparent 98deg)`,
@@ -45,18 +49,18 @@ export const SideRays = memo(function SideRays({ className, intensity = 0.65 }: 
 
         {/* Crisp Linear Beams */}
         <svg
-          className="absolute inset-0 w-full h-full opacity-35 dark:opacity-45"
+          className="absolute inset-0 w-full h-full opacity-35 dark:opacity-45 pointer-events-none"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 1000 1000"
         >
           <defs>
             <linearGradient id="beamGradRight1" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#10b981" stopOpacity="0.42" />
+              <stop offset="0%" stopColor="#2bff4f" stopOpacity="0.42" />
               <stop offset="60%" stopColor="#008751" stopOpacity="0.20" />
               <stop offset="100%" stopColor="#008751" stopOpacity="0" />
             </linearGradient>
             <linearGradient id="beamGradRight2" x1="100%" y1="0%" x2="20%" y2="100%">
-              <stop offset="0%" stopColor="#d4af37" stopOpacity="0.35" />
+              <stop offset="0%" stopColor="#4de1d2" stopOpacity="0.35" />
               <stop offset="70%" stopColor="#008751" stopOpacity="0.13" />
               <stop offset="100%" stopColor="#008751" stopOpacity="0" />
             </linearGradient>
