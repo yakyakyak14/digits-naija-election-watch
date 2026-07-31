@@ -64,10 +64,10 @@ spinning stack. Reach for that rather than guessing at CSS.
 - Palette derives## Current State
 - Phase 1 & 2 completed (Nigerian theme, auth system, roles & RLS, control center scaffold).
 - Features built: LiveKit 1–6 split screen video grid, DIGEO training & certification, real-time i-Witness camera recorder with Google Places API, 10 platform enhancements, and floating footer (`Built by SirHope of WYN-Tech.`).
-- ReactBits Side Rays Background Integrated: Built `SideRays` component projecting dual top-corner (top-left & top-right) light beams across all pages (`/`, `/live`, `/features`, `/how-it-works`, `/about`, `/contact`, `/i-witness`, `/control-center`, `/account`, etc.) except the login page (`/auth`).
+- ReactBits Side Rays Background Integrated: Built `SideRays` component projecting single-side top-right light beams at 50% reduced opacity across all pages (`/`, `/live`, `/features`, `/how-it-works`, `/about`, `/contact`, `/i-witness`, `/control-center`, `/account`, etc.) except the login page (`/auth`).
 - Auth Page Performance & UI Overhaul: Isolated `SignInForm` and `SignUpForm` subcomponents for instant 0ms typing response without parent re-renders. Added interactive particle canvas background with mouse proximity connections and ambient emerald/gold orbs. Enhanced Google OAuth with `prompt: "select_account"`.
 - Vercel Deployment Fix: Resolved white blank screen & peer dependency issues (`.npmrc`, `src/main.tsx`).
-- Build & Typecheck: `bun run build` (3.02s, 0 errors) and `bunx tsc --noEmit` (0 errors).
+- Build & Typecheck: `bun run build` (2.99s, 0 errors) and `bunx tsc --noEmit` (0 errors).
 - Remote repository updated and live at: https://github.com/yakyakyak14/digits-naija-election-watch.git.
 or-approved feeds; public viewers get subscribe-only.
 
