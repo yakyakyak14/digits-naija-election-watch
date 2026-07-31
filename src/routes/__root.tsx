@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
 } from "@tanstack/react-router";
 import { useEffect } from "react";
@@ -15,6 +16,7 @@ import { DigitsMark } from "@/components/brand/DigitsLogo";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { applyTheme, readStoredTheme } from "@/components/theme/ThemeToggle";
 import { SITE_URL } from "@/lib/site";
+import { SideRays } from "@/components/ui/side-rays";
 
 const SITE_NAME = "DIGITs Election Watch";
 
@@ -22,10 +24,6 @@ const TAGLINE = "Nigeria, watched by Nigerians";
 const DESCRIPTION =
   "Live observer feeds from Nigerian polling units, verified citizen i-Witness reports, and accredited DIGEO observer training. Watching is free and needs no account.";
 
-/**
- * Structured data so search engines and social cards describe the platform
- * rather than guessing from the page text.
- */
 const ORGANISATION_JSONLD = {
   "@context": "https://schema.org",
   "@type": "Organization",
@@ -168,6 +166,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+  const location = useLocation();
+
+  const isLoginPage = location.pathname === "/auth" || location.pathname.startsWith("/auth/");
 
   // Apply the stored theme before first paint of the client tree so a dark-mode
   // visitor never sees a light flash.
@@ -188,6 +189,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <HeadContent />
+      {!isLoginPage && <SideRays />}
       <Outlet />
       <InstallPrompt />
       <Toaster richColors position="top-right" />
