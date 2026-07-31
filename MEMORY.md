@@ -61,18 +61,15 @@ spinning stack. Reach for that rather than guessing at CSS.
   (`public/digits-election-new-logo-png.png`) — trimmed, alpha-keyed, palette-
   quantised PNG + WebP at 32/48/64/128/192/256/512, a maskable PWA icon, an Apple
   touch icon, and a 1200×630 OG card.
-- Palette derives from the crest: navy ink, Nigerian green (action), ceremonial
-  gold (accreditation). Defined in `src/styles.css`.
-- Every page ends with the footer credit: `Built by SirHope of WYN-Tech.` with both
-  names bold and gently floating (`animate-float` / `animate-float-delay`).
-- No Lovable branding, code, telemetry or heart-shaped iconography anywhere.
-
-## Live video topology
-
-Two rooms, not one per feed:
-
-- `digits-intake-ng` — observers publish here first; only operators subscribe.
-- `digits-live-ng` — operator-approved feeds; public viewers get subscribe-only.
+- Palette derives## Current State
+- Phase 1 & 2 completed (Nigerian theme, auth system, roles & RLS, control center scaffold).
+- Features built: LiveKit 1–6 split screen video grid, DIGEO training & certification, real-time i-Witness camera recorder with Google Places API, 10 platform enhancements, and floating footer (`Built by SirHope of WYN-Tech.`).
+- ReactBits Side Rays Background Integrated: Built `SideRays` component projecting dual top-corner (top-left & top-right) light beams across all pages (`/`, `/live`, `/features`, `/how-it-works`, `/about`, `/contact`, `/i-witness`, `/control-center`, `/account`, etc.) except the login page (`/auth`).
+- Auth Page Performance & UI Overhaul: Isolated `SignInForm` and `SignUpForm` subcomponents for instant 0ms typing response without parent re-renders. Added interactive particle canvas background with mouse proximity connections and ambient emerald/gold orbs. Enhanced Google OAuth with `prompt: "select_account"`.
+- Vercel Deployment Fix: Resolved white blank screen & peer dependency issues (`.npmrc`, `src/main.tsx`).
+- Build & Typecheck: `bun run build` (3.02s, 0 errors) and `bunx tsc --noEmit` (0 errors).
+- Remote repository updated and live at: https://github.com/yakyakyak14/digits-naija-election-watch.git.
+or-approved feeds; public viewers get subscribe-only.
 
 A viewer holds **one** WebRTC connection for all 1–6 tiles; adaptive-stream and
 simulcast pick each tile's layer. Approval flips `is_approved`, the broadcaster sees
