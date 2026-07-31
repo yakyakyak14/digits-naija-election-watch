@@ -17,7 +17,6 @@ import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { applyTheme, readStoredTheme } from "@/components/theme/ThemeToggle";
 import { SITE_URL } from "@/lib/site";
 import { SideRays } from "@/components/ui/side-rays";
-import { ShaderGradientBg } from "@/components/ui/ShaderGradientBg";
 
 const SITE_NAME = "DIGITs Election Watch";
 
@@ -190,12 +189,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <HeadContent />
-      {!isLoginPage && (
-        <>
-          <ShaderGradientBg />
-          <SideRays />
-        </>
-      )}
+      {!isLoginPage && <SideRays />}
       <Outlet />
       <InstallPrompt />
       <Toaster richColors position="top-right" />
