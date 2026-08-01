@@ -32,18 +32,49 @@ export interface TokenGrant {
 
 const FALLBACK: TokenGrant = { transport: "fallback", token: null, url: null, room: null };
 
-async function invoke(body: Record<string, unknown>): Promise<TokenGrant> {
+/**
+ * Reads the real message out of a failed function call. supabase-js reports any
+ * non-2xx as a generic FunctionsHttpError and puts the response on `context`;
+ * without unwrapping it, a 403 about roles is indistinguishable from the
+ * provider being offline.
+ */
+async function describeError(error: Error): Promise<string> {
+  const response = (error as { context?: Response }).context;
+  if (response && typeof response.json === "function") {
+    const parsed = (await response.json().catch(() => null)) as { error?: string } | null;
+    if (parsed?.error) return parsed.error;
+  }
+  return error.message;
+}
+
+/**
+ * `degrade` is the difference between watching and broadcasting.
+ *
+ * Viewers must degrade: if the provider is down the grid still renders recorded
+ * sources, and an error toast would be noise. A publisher must NOT degrade —
+ * swallowing the response turned "you do not hold the DIGEO role" into "live
+ * video is not switched on", which sent an observer chasing a configuration
+ * problem that did not exist.
+ */
+async function invoke(
+  body: Record<string, unknown>,
+  { degrade = true }: { degrade?: boolean } = {},
+): Promise<TokenGrant> {
   const { data, error } = await supabase.functions.invoke<TokenGrant & { error?: string }>(
     "livekit-token",
     { body },
   );
 
   if (error) {
-    // A missing or unreachable provider must degrade, not crash the page.
-    console.error("[livekit-token]", error.message);
+    const detail = await describeError(error);
+    console.error("[livekit-token]", detail);
+    if (!degrade) throw new Error(detail);
     return FALLBACK;
   }
-  if (!data) return FALLBACK;
+  if (!data) {
+    if (!degrade) throw new Error("The streaming service did not respond.");
+    return FALLBACK;
+  }
   if (data.error) throw new Error(data.error);
 
   return data;
@@ -116,7 +147,7 @@ export interface PublisherGrant {
  * observer's live_streams row and returns the room their approval state allows.
  */
 export async function mintPublisherToken(request: PublisherRequest): Promise<PublisherGrant> {
-  const grant = await invoke({ action: "publisher", ...request });
+  const grant = await invoke({ action: "publisher", ...request }, { degrade: false });
 
   if (
     grant.transport !== "livekit" ||
