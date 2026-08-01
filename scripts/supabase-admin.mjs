@@ -10,21 +10,45 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
  */
 export async function loadEnv() {
   const raw = await fs.readFile(path.join(ROOT, ".env"), "utf8").catch(() => "");
-  const env = Object.fromEntries(
-    raw
-      .split(/\r?\n/)
-      .filter((line) => line.includes("=") && !line.trim().startsWith("#"))
-      .map((line) => {
-        const i = line.indexOf("=");
-        return [
-          line.slice(0, i).trim(),
-          line
-            .slice(i + 1)
-            .trim()
-            .replace(/^"|"$/g, ""),
-        ];
-      }),
-  );
+
+  const entries = [];
+  const glued = [];
+
+  for (const line of raw.split(/\r?\n/)) {
+    if (!line.includes("=") || line.trim().startsWith("#")) continue;
+
+    const i = line.indexOf("=");
+    const name = line.slice(0, i).trim();
+    let value = line.slice(i + 1).trim();
+
+    /*
+     * Catch a missing newline between two variables:
+     *   LIVEKIT_URL=wss://x.livekit.cloudLIVEKIT_API_KEY=API...
+     * Pasting into .env drops the break surprisingly often. Left alone it both
+     * corrupts the first value and makes the second variable vanish, which
+     * surfaces far away as an unexplained auth failure. Split it and warn.
+     */
+    const embedded = /(?<![A-Z0-9_])([A-Z][A-Z0-9_]{2,})=/.exec(value);
+    if (embedded && embedded.index > 0) {
+      const head = value.slice(0, embedded.index);
+      const tail = value.slice(embedded.index);
+      const j = tail.indexOf("=");
+      glued.push(`${name} + ${tail.slice(0, j)}`);
+      value = head.replace(/"$/, "");
+      entries.push([tail.slice(0, j).trim(), tail.slice(j + 1).trim().replace(/^"|"$/g, "")]);
+    }
+
+    entries.push([name, value.replace(/^"|"$/g, "")]);
+  }
+
+  if (glued.length > 0) {
+    console.warn(
+      `[env] Missing newline in .env between: ${glued.join(", ")}. ` +
+        `Parsed them apart for this run — fix the file so the values are not corrupted.`,
+    );
+  }
+
+  const env = Object.fromEntries(entries);
 
   const merged = { ...env, ...process.env };
   const ref = merged.SUPABASE_PROJECT_ID;
