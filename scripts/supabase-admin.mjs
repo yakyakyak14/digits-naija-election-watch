@@ -35,7 +35,13 @@ export async function loadEnv() {
       const j = tail.indexOf("=");
       glued.push(`${name} + ${tail.slice(0, j)}`);
       value = head.replace(/"$/, "");
-      entries.push([tail.slice(0, j).trim(), tail.slice(j + 1).trim().replace(/^"|"$/g, "")]);
+      entries.push([
+        tail.slice(0, j).trim(),
+        tail
+          .slice(j + 1)
+          .trim()
+          .replace(/^"|"$/g, ""),
+      ]);
     }
 
     entries.push([name, value.replace(/^"|"$/g, "")]);
