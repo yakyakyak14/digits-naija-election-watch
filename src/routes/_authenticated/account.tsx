@@ -2,12 +2,17 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  Award,
   BadgeCheck,
+  Calendar,
   Camera,
   GraduationCap,
   LayoutDashboard,
   Loader2,
   LogOut,
+  MapPin,
+  Phone,
+  Radio,
   Save,
   ShieldCheck,
   TriangleAlert,
@@ -23,6 +28,7 @@ import {
   LocationAutocomplete,
   type ResolvedLocation,
 } from "@/components/common/LocationAutocomplete";
+import { StreamBroadcaster } from "@/components/video/StreamBroadcaster";
 import { useViewer } from "@/hooks/useViewer";
 import { supabase } from "@/integrations/supabase/client";
 import { highestRoleLabel, ROLE_META } from "@/lib/roles";
@@ -41,7 +47,7 @@ export const Route = createFileRoute("/_authenticated/account")({
 const NIN_PATTERN = /^[0-9]{11}$/;
 
 function AccountPage() {
-  const { user, profile, roles, isStaff, hasNin, loading, refetchProfile } = useViewer();
+  const { user, profile, deployment, application, roles, isStaff, isObserver, hasNin, loading, refetchProfile } = useViewer();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -107,7 +113,6 @@ function AccountPage() {
         .eq("id", user.id);
 
       if (error) {
-        // The unique partial index on NIN is the one collision worth explaining.
         toast.error(
           error.message.includes("profiles_nin_unique")
             ? "That NIN is already registered to another account."
@@ -158,6 +163,12 @@ function AccountPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
+            {isObserver && (
+              <Badge className="gap-1 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-bold">
+                <Award className="h-3.5 w-3.5" />
+                Accredited DIGEO Observer
+              </Badge>
+            )}
             <Badge variant="secondary">{highestRoleLabel(roles)}</Badge>
             {hasNin ? (
               <Badge className="gap-1 bg-primary/15 text-primary">
@@ -179,6 +190,62 @@ function AccountPage() {
             </Button>
           </div>
         </header>
+
+        {/* DIGEO Observer Field Station & Live Stream Console */}
+        {isObserver && (
+          <section className="space-y-6">
+            {/* Deployment Card */}
+            {deployment && (
+              <div className="plate space-y-4 border-emerald-500/30 bg-emerald-950/10 p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Badge className="gap-1 bg-emerald-500 text-slate-950 font-bold">
+                      <MapPin className="h-3.5 w-3.5" />
+                      Assigned Polling Unit
+                    </Badge>
+                    <span className="text-xs text-muted-foreground uppercase font-mono font-semibold">
+                      {deployment.election_name}
+                    </span>
+                  </div>
+                  <Badge variant="outline" className="text-xs uppercase font-mono">
+                    Status: {deployment.status}
+                  </Badge>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground">Polling Unit</p>
+                    <p className="font-display text-base font-bold text-foreground">
+                      {deployment.polling_unit_name}
+                      {deployment.polling_unit_code ? ` (${deployment.polling_unit_code})` : ""}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {deployment.lga}, {deployment.state} {deployment.ward ? `· Ward: ${deployment.ward}` : ""}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground">Reporting Time</p>
+                    <p className="font-display text-sm font-semibold flex items-center gap-1.5 mt-0.5">
+                      <Calendar className="h-3.5 w-3.5 text-emerald-500" />
+                      {new Date(deployment.reporting_time).toLocaleString()}
+                    </p>
+
+                    {deployment.supervisor_name && (
+                      <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1.5">
+                        <Phone className="h-3.5 w-3.5 text-emerald-500" />
+                        Supervisor: <span className="font-semibold text-foreground">{deployment.supervisor_name}</span> ({deployment.supervisor_phone ?? "N/A"})
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Live Broadcaster */}
+            <StreamBroadcaster />
+          </section>
+        )}
 
         {/* NIN gate notice */}
         {!hasNin && !loading && (
@@ -210,7 +277,7 @@ function AccountPage() {
           </Button>
 
           <Button asChild variant="outline" className="h-auto justify-start gap-3 p-4">
-            <Link to="/control-center/training">
+            <Link to="/training">
               <GraduationCap className="h-5 w-5 shrink-0 text-primary" />
               <span className="text-left">
                 <span className="block text-sm font-semibold">DIGEO academy</span>
