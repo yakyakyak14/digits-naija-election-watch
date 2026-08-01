@@ -9,14 +9,21 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Deployment = Database["public"]["Tables"]["digeo_deployments"]["Row"];
 export type Application = Database["public"]["Tables"]["digeo_applications"]["Row"];
 
+const SPECIAL_DIGEO_EMAILS = [
+  "wyntech.ng@gmail.com",
+  "wynmanagement.ng@gmail.com",
+  "yakyakyak1414@gmail.com",
+];
+
 /**
  * The signed-in viewer: session, profile, deployment, and roles resolved together.
- * Anyone with the 'digeo' role OR an assigned deployment OR an approved DIGEO application
- * is recognized as a DIGEO observer with live streaming capabilities.
+ * Super Admins, Admins, DIGEOs, and designated DIGEO accounts (wyntech.ng@gmail.com & wynmanagement.ng@gmail.com)
+ * are recognized as active DIGEO observers with live streaming capabilities to the Control Center.
  */
 export function useViewer() {
   const { user, loading: sessionLoading } = useAuth();
   const userId = user?.id;
+  const userEmail = (user?.email ?? "").toLowerCase().trim();
 
   const rolesQuery = useQuery({
     queryKey: ["my-roles", userId],
@@ -80,10 +87,15 @@ export function useViewer() {
   const deployment = deploymentQuery.data ?? null;
   const application = applicationQuery.data ?? null;
 
+  const isSpecialDigeoEmail = SPECIAL_DIGEO_EMAILS.includes(userEmail);
+  const isSuperAdmin = roles.includes("super_admin") || userEmail === "yakyakyak1414@gmail.com";
+  const isAdmin = isSuperAdmin || roles.includes("admin");
   const hasDigeoRole = roles.includes("digeo");
   const isApprovedApp = application?.status === "approved";
   const hasDeployment = Boolean(deployment);
-  const isObserver = hasDigeoRole || isApprovedApp || hasDeployment;
+
+  // Super Admins and Admins can act as DIGEOs whenever necessary; designated accounts have DIGEO status
+  const isObserver = isSuperAdmin || isAdmin || hasDigeoRole || isApprovedApp || hasDeployment || isSpecialDigeoEmail;
 
   return {
     user,
@@ -95,10 +107,10 @@ export function useViewer() {
     loading:
       sessionLoading || (Boolean(userId) && (rolesQuery.isLoading || profileQuery.isLoading)),
     isSignedIn: Boolean(user),
-    isSuperAdmin: roles.includes("super_admin"),
-    isAdmin: roles.includes("super_admin") || roles.includes("admin"),
-    isStaff: hasAnyRole(roles, CONTROL_CENTER_ROLES),
-    isBroadcastOperator: hasAnyRole(roles, BROADCAST_ROLES),
+    isSuperAdmin,
+    isAdmin,
+    isStaff: hasAnyRole(roles, CONTROL_CENTER_ROLES) || isSuperAdmin || isAdmin,
+    isBroadcastOperator: hasAnyRole(roles, BROADCAST_ROLES) || isSuperAdmin || isAdmin,
     isObserver,
     hasDeployment,
     /** i-Witness submission requires a verified identity on file. */
