@@ -237,7 +237,7 @@ export function DIGEOTrainingCenter() {
         try {
           localStorage.setItem(
             `digeo-guest-progress-${active.id}`,
-            JSON.stringify({ score, passed, timestamp: Date.now() })
+            JSON.stringify({ score, passed, timestamp: Date.now() }),
           );
         } catch (_) {}
       }
@@ -246,7 +246,7 @@ export function DIGEOTrainingCenter() {
         toast.success(
           `Module ${active.module_number} passed with ${score}%. ${
             !isSignedIn ? "Sign in to save this to your accreditation record." : ""
-          }`
+          }`,
         );
       } else {
         toast.error(`${score}% — you need ${passMark}% to pass. Review the module and try again.`);

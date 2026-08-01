@@ -95,7 +95,13 @@ export function useViewer() {
   const hasDeployment = Boolean(deployment);
 
   // Super Admins and Admins can act as DIGEOs whenever necessary; designated accounts have DIGEO status
-  const isObserver = isSuperAdmin || isAdmin || hasDigeoRole || isApprovedApp || hasDeployment || isSpecialDigeoEmail;
+  const isObserver =
+    isSuperAdmin ||
+    isAdmin ||
+    hasDigeoRole ||
+    isApprovedApp ||
+    hasDeployment ||
+    isSpecialDigeoEmail;
 
   return {
     user,

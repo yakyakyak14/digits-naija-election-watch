@@ -17,7 +17,7 @@ export const SideRays = memo(function SideRays({ className, intensity = 0.65 }: 
       aria-hidden="true"
       className={cn(
         "fixed inset-0 pointer-events-none z-[1] overflow-hidden select-none",
-        className
+        className,
       )}
     >
       {/* ----------------- TOP RIGHT RAYS ----------------- */}
@@ -35,7 +35,7 @@ export const SideRays = memo(function SideRays({ className, intensity = 0.65 }: 
               transparent 22deg, 
               rgba(16, 185, 129, ${0.16 * intensity}) 35deg, 
               transparent 48deg, 
-              rgba(77, 225, 210, ${0.10 * intensity}) 58deg, 
+              rgba(77, 225, 210, ${0.1 * intensity}) 58deg, 
               transparent 72deg, 
               rgba(0, 135, 81, ${0.12 * intensity}) 84deg, 
               transparent 98deg)`,

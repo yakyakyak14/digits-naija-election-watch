@@ -15,7 +15,8 @@
     "db:types": "node scripts/generate-types.mjs",
     "fn:deploy": "node scripts/deploy-functions.mjs",
     "seo": "node scripts/generate-seo.mjs",
-    "domain": "node scripts/set-domain.mjs"
+    "domain": "node scripts/set-domain.mjs",
+    "livekit:check": "node scripts/check-livekit.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

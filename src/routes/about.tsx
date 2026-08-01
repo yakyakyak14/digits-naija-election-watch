@@ -136,7 +136,9 @@ export function AboutAndContactPage() {
       setName("");
       setEmail("");
       setMessage("");
-      toast.success("Thank you! Your message has been received. Our team will get back to you shortly.");
+      toast.success(
+        "Thank you! Your message has been received. Our team will get back to you shortly.",
+      );
     }, 800);
   }
 
@@ -151,7 +153,8 @@ export function AboutAndContactPage() {
             Built so Nigerians never have to take anyone's word for it
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            DIGITs is an independent, non-partisan platform for real-time citizen election watching, certified observer training, and transparent verification.
+            DIGITs is an independent, non-partisan platform for real-time citizen election watching,
+            certified observer training, and transparent verification.
           </p>
         </div>
       </section>
@@ -165,7 +168,9 @@ export function AboutAndContactPage() {
                 <pillar.icon className="h-5 w-5" />
               </span>
               <h2 className="mt-4 font-display text-lg font-bold">{pillar.title}</h2>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">{pillar.body}</p>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+                {pillar.body}
+              </p>
             </article>
           ))}
         </div>
@@ -176,9 +181,7 @@ export function AboutAndContactPage() {
         <div className="mx-auto max-w-5xl px-4 py-12">
           <div className="mx-auto max-w-xl text-center">
             <ScaleIcon className="mx-auto h-8 w-8 text-primary" />
-            <h2 className="mt-3 font-display text-display-sm font-bold">
-              Six Core Guarantees
-            </h2>
+            <h2 className="mt-3 font-display text-display-sm font-bold">Six Core Guarantees</h2>
             <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               Principles enforced across the platform and database.
             </p>
@@ -289,7 +292,8 @@ export function AboutAndContactPage() {
             <div>
               <h2 className="font-display text-xl font-bold">Send a Message</h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                Have a question or proposal? Send a direct message to our support &amp; partnership team.
+                Have a question or proposal? Send a direct message to our support &amp; partnership
+                team.
               </p>
             </div>
 

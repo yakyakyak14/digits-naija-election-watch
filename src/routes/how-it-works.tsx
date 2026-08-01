@@ -120,7 +120,8 @@ function HowItWorksPage() {
             How something witnessed becomes something proven
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Experience the full election watch journey — from polling unit arrival to certified publication — in an interactive scroll experience below.
+            Experience the full election watch journey — from polling unit arrival to certified
+            publication — in an interactive scroll experience below.
           </p>
         </div>
       </section>

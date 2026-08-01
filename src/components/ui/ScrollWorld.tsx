@@ -30,7 +30,8 @@ const DEFAULT_SECTIONS: ScrollWorldSection[] = [
     tags: ["176,846 Units", "BVAS Verification", "Open Sunlight"],
     accent: "#10b981",
     bgGradient: "from-emerald-950/40 via-emerald-900/20 to-slate-950",
-    image: "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1600&q=80",
     icon: GraduationCap,
   },
   {
@@ -42,7 +43,8 @@ const DEFAULT_SECTIONS: ScrollWorldSection[] = [
     tags: ["6 Modules", "70% Pass Mark", "Accredited ID"],
     accent: "#008751",
     bgGradient: "from-green-950/40 via-emerald-950/30 to-slate-950",
-    image: "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1600&q=80",
     icon: ShieldCheck,
     cta: {
       primary: { label: "Train as Observer", href: "/training" },
@@ -57,7 +59,8 @@ const DEFAULT_SECTIONS: ScrollWorldSection[] = [
     tags: ["GPS Locked", "NIN Identity", "Gallery Blocked"],
     accent: "#d4af37",
     bgGradient: "from-amber-950/30 via-slate-950 to-emerald-950/30",
-    image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80",
     icon: Camera,
     cta: {
       primary: { label: "File Report", href: "/i-witness" },
@@ -72,7 +75,8 @@ const DEFAULT_SECTIONS: ScrollWorldSection[] = [
     tags: ["4-Stage Triage", "Audit Logged", "Zero Deletions"],
     accent: "#3b82f6",
     bgGradient: "from-blue-950/30 via-emerald-950/20 to-slate-950",
-    image: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1600&q=80",
     icon: CheckCircle2,
     cta: {
       secondary: { label: "View Audit Log", href: "/audit-log" },
@@ -87,7 +91,8 @@ const DEFAULT_SECTIONS: ScrollWorldSection[] = [
     tags: ["6-Way Split", "Free Access", "Live Feeds"],
     accent: "#10b981",
     bgGradient: "from-emerald-950/50 via-teal-950/30 to-slate-950",
-    image: "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1600&q=80",
     icon: Video,
     cta: {
       primary: { label: "Watch Live Grid", href: "/live" },
@@ -116,21 +121,18 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
-      
+
       // Calculate overall progress through container
       const totalScrollable = rect.height - windowHeight;
       if (totalScrollable <= 0) return;
-      
+
       const currentScroll = -rect.top;
       const rawProgress = Math.min(Math.max(currentScroll / totalScrollable, 0), 1);
       setScrollProgress(rawProgress);
 
       // Determine active section index
       const sectionCount = sections.length;
-      const index = Math.min(
-        Math.floor(rawProgress * sectionCount),
-        sectionCount - 1
-      );
+      const index = Math.min(Math.floor(rawProgress * sectionCount), sectionCount - 1);
       setActiveIndex(index);
     };
 
@@ -152,13 +154,12 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
       ref={containerRef}
       className={cn(
         "relative w-full bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30",
-        className
+        className,
       )}
       style={{ height: `${sections.length * 100}vh` }}
     >
       {/* Fixed Sticky Viewport Stage */}
       <div className="sticky top-0 h-screen w-full overflow-hidden pointer-events-none z-10 flex flex-col justify-between">
-        
         {/* Top Progress Bar */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-900/80 z-50">
           <div
@@ -179,13 +180,13 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
           {sections.map((section, idx) => {
             const isActive = idx === activeIndex;
             const distance = Math.abs(idx - activeIndex);
-            
+
             return (
               <div
                 key={section.id}
                 className={cn(
                   "absolute inset-0 transition-opacity duration-1000 ease-in-out",
-                  isActive ? "opacity-100 scale-105" : "opacity-0 scale-100"
+                  isActive ? "opacity-100 scale-105" : "opacity-0 scale-100",
                 )}
                 style={{
                   transitionProperty: "opacity, transform",
@@ -197,12 +198,7 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
                   alt={section.title}
                   className="h-full w-full object-cover object-center filter brightness-[0.35] contrast-110 blur-[1px]"
                 />
-                <div
-                  className={cn(
-                    "absolute inset-0 bg-gradient-to-b",
-                    section.bgGradient
-                  )}
-                />
+                <div className={cn("absolute inset-0 bg-gradient-to-b", section.bgGradient)} />
                 <div className="absolute inset-0 bg-slate-950/60 mix-blend-multiply" />
               </div>
             );
@@ -226,7 +222,7 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
                     "hidden sm:inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wide backdrop-blur-md border transition-all duration-300",
                     isActive
                       ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 opacity-100 translate-x-0"
-                      : "bg-slate-900/60 text-slate-400 border-slate-800 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"
+                      : "bg-slate-900/60 text-slate-400 border-slate-800 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0",
                   )}
                 >
                   {sec.label}
@@ -238,7 +234,7 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
                     "h-3 w-3 rounded-full transition-all duration-300 border",
                     isActive
                       ? "bg-emerald-400 border-emerald-300 scale-125 shadow-[0_0_12px_rgba(16,185,129,0.8)]"
-                      : "bg-slate-700 border-slate-600 group-hover:bg-slate-400 group-hover:scale-110"
+                      : "bg-slate-700 border-slate-600 group-hover:bg-slate-400 group-hover:scale-110",
                   )}
                 />
               </button>

@@ -70,7 +70,17 @@ To switch it on:
 
 1. Create a project at [LiveKit Cloud](https://cloud.livekit.io), or self-host.
 2. Put `LIVEKIT_URL`, `LIVEKIT_API_KEY` and `LIVEKIT_API_SECRET` in `.env`.
-3. `npm run fn:deploy -- --secrets`
+   All three must come from the **same project**, copied together — LiveKit
+   reveals a secret only once, at the moment the key is created.
+3. `npm run livekit:check` — confirms the server accepts them before you deploy.
+4. `npm run fn:deploy -- --secrets`
+
+> **A token from the dashboard is not a substitute.** The platform mints a token
+> per observer and per viewer, which requires the key *and* its secret. A pasted
+> `LIVEKIT_TOKEN` carries one fixed identity, one room, and a short expiry: every
+> observer would collide on the same identity, viewers would inherit publish
+> rights, and the intake/public split would collapse. `LIVEKIT_TOKEN`,
+> `LIVEKIT_ROOM_NAME` and `LIVEKIT_WEBSOCKET_URL` are not read by this codebase.
 
 The transport badge on the live grid and the Command Center → Settings page both
 flip to **Connected** with no code change.
@@ -108,6 +118,7 @@ npm run lint         # eslint (prettier included)
 npm run db:push      # apply supabase/migrations/*.sql (re-runnable)
 npm run db:types     # regenerate src/integrations/supabase/types.ts from live schema
 npm run fn:deploy    # deploy Edge Functions + push their secrets
+npm run livekit:check # verify LiveKit credentials against the server
 ```
 
 `npm run db:push` accepts a filter: `npm run db:push -- 20260730`.

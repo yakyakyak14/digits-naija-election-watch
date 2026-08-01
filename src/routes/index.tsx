@@ -141,7 +141,8 @@ function HomePage() {
             </h1>
 
             <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Live observer feeds from Nigerian polling units, verified citizen i-Witness reports, and accredited observer training — transparent and open to everyone.
+              Live observer feeds from Nigerian polling units, verified citizen i-Witness reports,
+              and accredited observer training — transparent and open to everyone.
             </p>
 
             <div className="mt-7 flex flex-wrap justify-center gap-3">
@@ -160,7 +161,8 @@ function HomePage() {
             </div>
 
             <p className="mt-3 text-[11px] text-muted-foreground">
-              Watching, reading &amp; training require no account. Sign in only to comment or submit evidence.
+              Watching, reading &amp; training require no account. Sign in only to comment or submit
+              evidence.
             </p>
           </div>
 
@@ -237,9 +239,7 @@ function HomePage() {
       {/* Flow */}
       <section className="mx-auto max-w-7xl px-4 py-12">
         <div className="mx-auto max-w-xl text-center">
-          <h2 className="font-display text-display-sm font-bold">
-            Evidence Verification Pipeline
-          </h2>
+          <h2 className="font-display text-display-sm font-bold">Evidence Verification Pipeline</h2>
         </div>
 
         <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -265,11 +265,11 @@ function HomePage() {
             <Badge className="mb-2 bg-accent/20 text-accent-foreground dark:text-accent">
               Open Access
             </Badge>
-            <h2 className="font-display text-display-sm font-bold">
-              Transparent &amp; Accessible
-            </h2>
+            <h2 className="font-display text-display-sm font-bold">Transparent &amp; Accessible</h2>
             <p className="mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">
-              All live feeds, reports, and training materials are freely accessible without an account. Account registration is only required to post comments or submit verified evidence.
+              All live feeds, reports, and training materials are freely accessible without an
+              account. Account registration is only required to post comments or submit verified
+              evidence.
             </p>
             <div className="mt-5 flex flex-wrap gap-2.5">
               <Button asChild size="sm" className="gap-2">

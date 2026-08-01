@@ -47,7 +47,18 @@ export const Route = createFileRoute("/_authenticated/account")({
 const NIN_PATTERN = /^[0-9]{11}$/;
 
 function AccountPage() {
-  const { user, profile, deployment, application, roles, isStaff, isObserver, hasNin, loading, refetchProfile } = useViewer();
+  const {
+    user,
+    profile,
+    deployment,
+    application,
+    roles,
+    isStaff,
+    isObserver,
+    hasNin,
+    loading,
+    refetchProfile,
+  } = useViewer();
   const navigate = useNavigate();
   const qc = useQueryClient();
 
@@ -220,7 +231,8 @@ function AccountPage() {
                       {deployment.polling_unit_code ? ` (${deployment.polling_unit_code})` : ""}
                     </p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {deployment.lga}, {deployment.state} {deployment.ward ? `· Ward: ${deployment.ward}` : ""}
+                      {deployment.lga}, {deployment.state}{" "}
+                      {deployment.ward ? `· Ward: ${deployment.ward}` : ""}
                     </p>
                   </div>
 
@@ -234,7 +246,11 @@ function AccountPage() {
                     {deployment.supervisor_name && (
                       <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1.5">
                         <Phone className="h-3.5 w-3.5 text-emerald-500" />
-                        Supervisor: <span className="font-semibold text-foreground">{deployment.supervisor_name}</span> ({deployment.supervisor_phone ?? "N/A"})
+                        Supervisor:{" "}
+                        <span className="font-semibold text-foreground">
+                          {deployment.supervisor_name}
+                        </span>{" "}
+                        ({deployment.supervisor_phone ?? "N/A"})
                       </p>
                     )}
                   </div>
