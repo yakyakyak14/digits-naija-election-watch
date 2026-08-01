@@ -19,6 +19,7 @@ import { Route as GetInvolvedRouteImport } from './routes/get-involved'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as IWitnessRouteImport } from './routes/i-witness'
 import { Route as LiveRouteImport } from './routes/live'
+import { Route as TrainingRouteImport } from './routes/training'
 import { Route as AuthenticatedAccountRouteImport } from './routes/_authenticated/account'
 import { Route as AuthenticatedControlCenterRouteImport } from './routes/_authenticated/control-center'
 import { Route as AuthenticatedControlCenterIndexRouteImport } from './routes/_authenticated/control-center/index'
@@ -80,6 +81,11 @@ const IWitnessRoute = IWitnessRouteImport.update({
 const LiveRoute = LiveRouteImport.update({
   id: '/live',
   path: '/live',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TrainingRoute = TrainingRouteImport.update({
+  id: '/training',
+  path: '/training',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAccountRoute = AuthenticatedAccountRouteImport.update({
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/how-it-works': typeof HowItWorksRoute
   '/i-witness': typeof IWitnessRoute
   '/live': typeof LiveRoute
+  '/training': typeof TrainingRoute
   '/account': typeof AuthenticatedAccountRoute
   '/control-center': typeof AuthenticatedControlCenterRouteWithChildren
   '/control-center/audit': typeof AuthenticatedControlCenterAuditRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByTo {
   '/how-it-works': typeof HowItWorksRoute
   '/i-witness': typeof IWitnessRoute
   '/live': typeof LiveRoute
+  '/training': typeof TrainingRoute
   '/account': typeof AuthenticatedAccountRoute
   '/control-center/audit': typeof AuthenticatedControlCenterAuditRoute
   '/control-center/field': typeof AuthenticatedControlCenterFieldRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/how-it-works': typeof HowItWorksRoute
   '/i-witness': typeof IWitnessRoute
   '/live': typeof LiveRoute
+  '/training': typeof TrainingRoute
   '/_authenticated/account': typeof AuthenticatedAccountRoute
   '/_authenticated/control-center': typeof AuthenticatedControlCenterRouteWithChildren
   '/_authenticated/control-center/audit': typeof AuthenticatedControlCenterAuditRoute
@@ -245,6 +254,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/i-witness'
     | '/live'
+    | '/training'
     | '/account'
     | '/control-center'
     | '/control-center/audit'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/i-witness'
     | '/live'
+    | '/training'
     | '/account'
     | '/control-center/audit'
     | '/control-center/field'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
     | '/how-it-works'
     | '/i-witness'
     | '/live'
+    | '/training'
     | '/_authenticated/account'
     | '/_authenticated/control-center'
     | '/_authenticated/control-center/audit'
@@ -319,6 +331,7 @@ export interface RootRouteChildren {
   HowItWorksRoute: typeof HowItWorksRoute
   IWitnessRoute: typeof IWitnessRoute
   LiveRoute: typeof LiveRoute
+  TrainingRoute: typeof TrainingRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       path: '/live'
       fullPath: '/live'
       preLoaderRoute: typeof LiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/training': {
+      id: '/training'
+      path: '/training'
+      fullPath: '/training'
+      preLoaderRoute: typeof TrainingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/account': {
@@ -551,6 +571,7 @@ const rootRouteChildren: RootRouteChildren = {
   HowItWorksRoute: HowItWorksRoute,
   IWitnessRoute: IWitnessRoute,
   LiveRoute: LiveRoute,
+  TrainingRoute: TrainingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

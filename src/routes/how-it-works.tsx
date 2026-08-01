@@ -7,10 +7,12 @@ import {
   MapPin,
   Radio,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollWorld } from "@/components/ui/ScrollWorld";
 
 export const Route = createFileRoute("/how-it-works")({
   head: () => ({
@@ -107,19 +109,26 @@ const TRIAGE = [
 function HowItWorksPage() {
   return (
     <SiteLayout>
+      {/* Header Banner */}
       <section className="border-b bg-hero-mesh">
         <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-          <Badge className="mb-4 bg-primary/12 text-primary">Workflow</Badge>
+          <Badge className="mb-4 bg-primary/12 text-primary gap-1">
+            <Sparkles className="h-3.5 w-3.5" />
+            Interactive Workflow
+          </Badge>
           <h1 className="font-display text-display font-extrabold leading-tight">
             How something witnessed becomes something proven
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Two ways in — as an accredited observer, or as a citizen who happened to be there — and
-            one review process that both feed into.
+            Experience the full election watch journey — from polling unit arrival to certified publication — in an interactive scroll experience below.
           </p>
         </div>
       </section>
 
+      {/* ScrollWorld Interactive Journey */}
+      <ScrollWorld />
+
+      {/* Detailed Workflow Grid */}
       <section className="mx-auto max-w-7xl px-4 py-16">
         <div className="grid gap-10 lg:grid-cols-2">
           {[
@@ -189,7 +198,7 @@ function HowItWorksPage() {
         <h2 className="font-display text-display-sm font-bold">Pick your way in</h2>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
           <Button asChild size="lg" className="gap-2">
-            <Link to="/get-involved">
+            <Link to="/training">
               <GraduationCap className="h-4 w-4" />
               Train as a DIGEO
               <ArrowRight className="h-4 w-4" />

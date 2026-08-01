@@ -147,7 +147,7 @@ function SettingsPage() {
               </span>
               <div>
                 <p className="text-sm font-semibold">
-                  Supabase — database, auth and evidence vault
+                  Encrypted Cloud Vault — database, auth and evidence storage
                 </p>
                 <p className="mt-0.5 max-w-md text-xs text-muted-foreground">
                   Row-level security on every table. Evidence sits in a private bucket served only

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Compass, Handshake, Rocket, ScaleIcon, ShieldCheck, Target } from "lucide-react";
+import { Handshake, Rocket, ScaleIcon, ShieldCheck, Target } from "lucide-react";
 import { SiteLayout } from "@/components/site/SiteLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "DIGITs is an independent, non-partisan platform that lets Nigerians observe their own elections in real time — and holds every published claim to a verifiable standard.",
+          "DIGITs is an independent, non-partisan platform that lets Nigerians observe their own elections in real time.",
       },
       { property: "og:title", content: "About DIGITs Election Watch" },
       {
@@ -27,45 +27,45 @@ export const Route = createFileRoute("/about")({
 const PILLARS = [
   {
     icon: Target,
-    title: "What we are for",
-    body: "Putting a credible record of election day in citizens' hands while it is still election day. Not after the tribunal, not in a report published months later — while the queue is still outside the polling unit.",
+    title: "Mission",
+    body: "Put a credible, timestamped record of election day in citizens' hands — while it's still election day.",
   },
   {
     icon: Rocket,
-    title: "What we do",
-    body: "Train and accredit citizen observers, stream their feeds live under operator curation, collect real-time evidence from anyone in the vicinity, and publish only what survives verification.",
+    title: "What We Do",
+    body: "Train observers, stream live feeds, collect real-time evidence, and publish only what survives verification.",
   },
   {
     icon: Handshake,
-    title: "Who we work with",
-    body: "Civil society organisations, newsrooms, and funders who want an evidence base rather than a narrative. We publish the same record to all of them at the same time.",
+    title: "Partners",
+    body: "CSOs, newsrooms, and funders receive the same verified record simultaneously — no special access.",
   },
 ];
 
 const PRINCIPLES = [
   {
     title: "Non-partisan or nothing",
-    body: "Observers declare non-partisanship on enrolment and are held to it. DIGITs does not endorse, predict, or characterise outcomes — not on the platform, and not on election day.",
+    body: "Observers declare non-partisanship on enrolment. DIGITs never endorses or predicts outcomes.",
   },
   {
     title: "Evidence over assertion",
-    body: "Every published claim traces to a timestamped, geo-stamped, hash-sealed capture from a named reporter. If we cannot show where and when, we do not publish it.",
+    body: "Every published claim is timestamped, geo-stamped, hash-sealed, and attributed to a named reporter.",
   },
   {
-    title: "Openness by default",
-    body: "Watching, reading and training require no account. Signing in is only for the two acts that attach a person's name to the public record: commenting, and filing evidence.",
+    title: "Open by default",
+    body: "Watching, reading and training require no account. Sign-in is only for commenting or submitting evidence.",
   },
   {
-    title: "Identity protected, not exposed",
-    body: "A reporter's NIN proves the report is not anonymous. It is never displayed publicly, never sold, and never handed to any party or campaign.",
+    title: "Identity protected",
+    body: "A reporter's NIN verifies identity but is never displayed publicly, sold, or shared with any party.",
   },
   {
-    title: "Nothing disappears quietly",
-    body: "Flagged evidence is retained with the reason recorded. Role changes, approvals and publications are written to an audit log that operators cannot edit.",
+    title: "Nothing disappears",
+    body: "Flagged evidence is retained with reasons recorded. All actions are written to an immutable audit log.",
   },
   {
-    title: "Safety outranks the shot",
-    body: "Observers are trained to withdraw from danger and report from safety. No clip is worth an injury, and no operator will ask for one.",
+    title: "Safety first",
+    body: "Observers are trained to withdraw from danger and report from safety. No clip is worth an injury.",
   },
 ];
 
@@ -73,54 +73,49 @@ function AboutPage() {
   return (
     <SiteLayout>
       <section className="border-b bg-hero-mesh">
-        <div className="mx-auto max-w-4xl px-4 py-16 text-center">
-          <DigitsMark size={76} priority className="mx-auto mb-6" />
-          <Badge className="mb-4 bg-primary/12 text-primary">About</Badge>
+        <div className="mx-auto max-w-4xl px-4 py-14 text-center">
+          <DigitsMark size={72} priority className="mx-auto mb-5" />
+          <Badge className="mb-3 bg-primary/12 text-primary">About</Badge>
           <h1 className="font-display text-display font-extrabold leading-tight">
             Built so Nigerians never have to take anyone's word for it
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            Nigerian elections are not short of opinions. They are short of records — timestamped,
-            located, attributable records that exist before the argument starts. DIGITs exists to
-            produce those.
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            Nigeria's elections need timestamped, located, attributable records — not opinions after the fact. DIGITs exists to produce those records.
           </p>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16">
-        <div className="grid gap-5 md:grid-cols-3">
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <div className="grid gap-4 md:grid-cols-3">
           {PILLARS.map((pillar) => (
-            <article key={pillar.title} className="plate p-6">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-primary/12 text-primary">
+            <article key={pillar.title} className="plate p-5">
+              <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/12 text-primary">
                 <pillar.icon className="h-5 w-5" />
               </span>
-              <h2 className="mt-4 font-display text-lg font-bold">{pillar.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{pillar.body}</p>
+              <h2 className="mt-3 font-display text-base font-bold">{pillar.title}</h2>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{pillar.body}</p>
             </article>
           ))}
         </div>
       </section>
 
       <section className="border-y bg-secondary/40">
-        <div className="mx-auto max-w-5xl px-4 py-16">
-          <div className="mx-auto max-w-2xl text-center">
-            <ScaleIcon className="mx-auto h-9 w-9 text-primary" />
-            <h2 className="mt-4 font-display text-display-sm font-bold">
-              Six commitments we hold ourselves to
+        <div className="mx-auto max-w-5xl px-4 py-12">
+          <div className="mx-auto max-w-xl text-center">
+            <ScaleIcon className="mx-auto h-8 w-8 text-primary" />
+            <h2 className="mt-3 font-display text-display-sm font-bold">
+              Six Commitments
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              Each of these is implemented somewhere in the platform, not just written here.
-            </p>
           </div>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
             {PRINCIPLES.map((principle) => (
-              <article key={principle.title} className="plate p-5">
+              <article key={principle.title} className="plate p-4">
                 <h3 className="flex items-start gap-2 font-display text-sm font-bold">
                   <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                   {principle.title}
                 </h3>
-                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                   {principle.body}
                 </p>
               </article>
@@ -129,29 +124,12 @@ function AboutPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-3xl px-4 py-16">
-        <Compass className="h-9 w-9 text-primary" />
-        <h2 className="mt-4 font-display text-display-sm font-bold">The problem, stated plainly</h2>
-        <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-          <p>
-            Nigeria runs elections across 176,846 polling units. Formal observation missions can
-            reach a fraction of them, and their findings usually arrive after the results have been
-            declared and the argument has already been settled in public.
-          </p>
-          <p>
-            Meanwhile, almost everyone at a polling unit is carrying a camera. What has been missing
-            is not footage — it is footage anyone can trust: bound to a place, bound to a time,
-            bound to a name, and checked by someone whose decision is on the record.
-          </p>
-          <p>
-            DIGITs closes that gap. Accredited observers stream under curation. Citizens capture in
-            real time under constraints that make their evidence hard to fake. The Command Center
-            verifies before anything is published, and every decision it makes is auditable
-            afterwards.
-          </p>
-        </div>
-
-        <div className="mt-8 flex flex-wrap gap-3">
+      <section className="mx-auto max-w-3xl px-4 py-12 text-center">
+        <h2 className="font-display text-display-sm font-bold">Get Involved</h2>
+        <p className="mx-auto mt-2 max-w-lg text-xs text-muted-foreground sm:text-sm">
+          Join the network as an observer, contribute evidence, or partner with DIGITs.
+        </p>
+        <div className="mt-5 flex flex-wrap justify-center gap-3">
           <Button asChild>
             <Link to="/get-involved">Join the network</Link>
           </Button>

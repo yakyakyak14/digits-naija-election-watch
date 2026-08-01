@@ -221,20 +221,36 @@ export function DIGEOTrainingCenter() {
       );
       const score = Math.round((correct / quiz.length) * 100);
       const passMark = active.pass_mark ?? 70;
+      const passed = score >= passMark;
 
-      const outcome = await recordAttempt({
-        moduleId: active.id,
-        score,
-        passMark,
-        answers: Object.fromEntries(Object.entries(answers).map(([k, v]) => [String(k), v])),
-      });
+      if (isSignedIn) {
+        const outcome = await recordAttempt({
+          moduleId: active.id,
+          score,
+          passMark,
+          answers: Object.fromEntries(Object.entries(answers).map(([k, v]) => [String(k), v])),
+        });
+        setResult({ score, passed: outcome.passed });
+        await progressQuery.refetch();
+      } else {
+        setResult({ score, passed });
+        try {
+          localStorage.setItem(
+            `digeo-guest-progress-${active.id}`,
+            JSON.stringify({ score, passed, timestamp: Date.now() })
+          );
+        } catch (_) {}
+      }
 
-      setResult({ score, passed: outcome.passed });
-      await progressQuery.refetch();
-
-      if (outcome.passed) toast.success(`Module ${active.module_number} passed with ${score}%.`);
-      else
+      if (passed) {
+        toast.success(
+          `Module ${active.module_number} passed with ${score}%. ${
+            !isSignedIn ? "Sign in to save this to your accreditation record." : ""
+          }`
+        );
+      } else {
         toast.error(`${score}% — you need ${passMark}% to pass. Review the module and try again.`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not record your attempt.");
     } finally {
@@ -556,7 +572,7 @@ export function DIGEOTrainingCenter() {
                     ) : (
                       <Button
                         onClick={() => void submitQuiz()}
-                        disabled={grading || !isSignedIn}
+                        disabled={grading}
                         className="gap-2"
                       >
                         {grading ? (
@@ -564,7 +580,7 @@ export function DIGEOTrainingCenter() {
                         ) : (
                           <CheckCircle2 className="h-4 w-4" />
                         )}
-                        {isSignedIn ? "Submit assessment" : "Sign in to be graded"}
+                        {isSignedIn ? "Submit assessment" : "Submit assessment (Guest)"}
                       </Button>
                     )}
                   </div>

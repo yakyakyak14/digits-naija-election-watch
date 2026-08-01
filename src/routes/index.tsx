@@ -28,7 +28,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "See Nigerian elections as they happen: live feeds from accredited observers, citizen i-Witness evidence verified before publication, and free DIGEO observer training. No account needed to watch.",
+          "Live polling unit observer feeds, verified citizen i-Witness reports, and free DIGEO observer training.",
       },
       { property: "og:title", content: "DIGITs Election Watch — Nigeria, watched by Nigerians" },
       {
@@ -42,77 +42,76 @@ export const Route = createFileRoute("/")({
 });
 
 const NUMBERS = [
-  { value: "176,846", label: "Polling units in scope", sub: "Every unit in the INEC register" },
-  { value: `${TOTAL_LGAS}`, label: "Local government areas", sub: "36 states and the FCT" },
-  { value: "1–6", label: "Live tiles on air", sub: "Curated by Command Center operators" },
-  { value: "2 min", label: "Maximum evidence clip", sub: "Short, decisive, verifiable" },
+  { value: "176,846", label: "Polling units in scope", sub: "INEC election register" },
+  { value: `${TOTAL_LGAS}`, label: "Local government areas", sub: "36 States & FCT" },
+  { value: "1–6", label: "Live tiles on air", sub: "Operator curated feeds" },
+  { value: "2 min", label: "Evidence clip cap", sub: "GPS & NIN verified" },
 ];
 
 const PILLARS = [
   {
     icon: Radio,
-    title: "Watch the polling unit, not the press release",
-    body: "Accredited DIGEO observers broadcast live from their assigned units. Operators place up to six feeds on the public grid; tap any tile to fill your screen. Watching costs nothing and asks nothing of you.",
+    title: "Live Polling Unit Feeds",
+    body: "Accredited observers stream live from polling units. Tap any feed tile to expand to full screen.",
     href: "/live",
-    cta: "Open the live grid",
+    cta: "Open live grid",
   },
   {
     icon: Camera,
-    title: "If you are there, you are the record",
-    body: "Anyone inside an election vicinity can file an i-Witness report: record on the spot, up to two minutes, stamped with your coordinates and verified identity. No gallery uploads — evidence has to be made in the moment.",
+    title: "Instant i-Witness Capture",
+    body: "File on-the-spot 2-minute evidence clips stamped with verified coordinates and identity.",
     href: "/i-witness",
-    cta: "File a report",
+    cta: "File report",
   },
   {
     icon: GraduationCap,
-    title: "Train, get accredited, get deployed",
-    body: "Six modules on electoral law, BVAS verification, EC8A arithmetic, evidence handling, conduct and live broadcast. Pass the assessments and your DIGEO certificate is issued with a verifiable accreditation number.",
-    href: "/get-involved",
-    cta: "Start DIGEO training",
+    title: "DIGEO Observer Training",
+    body: "6 self-paced modules on electoral law, BVAS checks, and evidence handling with accreditation.",
+    href: "/training",
+    cta: "Start training",
   },
   {
     icon: ShieldCheck,
-    title: "Nothing reaches the public unchecked",
-    body: "Every feed and every clip passes through the Command Center. Operators triage by severity, verify against the arithmetic, and decide what is published — with each decision written to an audit trail.",
+    title: "Command Center Audit",
+    body: "Every clip is triaged by severity and verified against checklists before publication.",
     href: "/how-it-works",
-    cta: "See the workflow",
+    cta: "View workflow",
   },
 ];
 
 const FLOW = [
   {
     step: "01",
-    title: "Someone sees something",
-    body: "An observer at their assigned unit, or any citizen inside the election vicinity, opens DIGITs and starts recording.",
+    title: "Capture",
+    body: "Observer or citizen records an incident live on location.",
     icon: Eye,
   },
   {
     step: "02",
-    title: "It is stamped and sealed",
-    body: "Coordinates, timestamp, verified NIN and a content hash are attached at capture. The clip uploads to a private evidence vault.",
+    title: "Seal",
+    body: "GPS, NIN, timestamp, and SHA-256 hash are locked to the clip.",
     icon: Lock,
   },
   {
     step: "03",
-    title: "The Command Center triages",
-    body: "Operators sort by severity, cross-check the numbers, and escalate what matters. Nothing is published on the reporter's word alone.",
+    title: "Triage",
+    body: "Command Center verifies facts against official checklists.",
     icon: FileCheck2,
   },
   {
     step: "04",
-    title: "Nigeria watches",
-    body: "Verified feeds and cleared evidence go to the public grid within minutes, and the record stays available after the count.",
+    title: "Publish",
+    body: "Verified feeds broadcast on the public grid in real time.",
     icon: Radio,
   },
 ];
 
 const ACCESS = [
-  { open: true, label: "Watch every live feed and switch between 1–6 tiles" },
-  { open: true, label: "Read verified i-Witness reports and the public record" },
-  { open: true, label: "Take the full DIGEO training curriculum" },
-  { open: true, label: "Install the app from Play Store, App Store or as a PWA" },
-  { open: false, label: "Comment on a live feed" },
-  { open: false, label: "File an i-Witness report with your evidence" },
+  { open: true, label: "Watch live observer feeds on 1–6 split screen" },
+  { open: true, label: "Read verified i-Witness reports and audit records" },
+  { open: true, label: "Take full DIGEO observer training & exams" },
+  { open: false, label: "Post comments on live feeds" },
+  { open: false, label: "File verified i-Witness evidence reports" },
 ];
 
 function HomePage() {
@@ -120,15 +119,15 @@ function HomePage() {
     <SiteLayout>
       {/* Hero */}
       <section className="relative overflow-hidden bg-hero-mesh">
-        <div className="mx-auto max-w-7xl px-4 pb-16 pt-14 sm:pt-20">
+        <div className="mx-auto max-w-7xl px-4 pb-14 pt-12 sm:pt-16">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 flex justify-center">
-              <DigitsMark size={84} priority className="drop-shadow-lg" />
+            <div className="mb-5 flex justify-center">
+              <DigitsMark size={80} priority className="drop-shadow-lg" />
             </div>
 
             <Badge
               variant="outline"
-              className="mb-5 gap-2 border-primary/30 bg-primary/8 px-3 py-1.5 text-[11px] font-semibold text-primary"
+              className="mb-4 gap-2 border-primary/30 bg-primary/8 px-3 py-1 text-[11px] font-semibold text-primary"
             >
               <span className="relative flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary/70" />
@@ -141,44 +140,41 @@ function HomePage() {
               Nigeria, watched by <span className="text-gradient-green">Nigerians</span>
             </h1>
 
-            <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Elections are won and lost in the minutes nobody records. DIGITs puts trained
-              observers and ordinary citizens on the same platform — live from the polling unit,
-              verified before publication, and on the public record for good.
+            <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+              Live observer feeds from Nigerian polling units, verified citizen i-Witness reports, and accredited observer training — transparent and open to everyone.
             </p>
 
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <div className="mt-7 flex flex-wrap justify-center gap-3">
               <Button asChild size="lg" className="gap-2 shadow-plate">
                 <Link to="/live">
                   <Radio className="h-4 w-4" />
-                  Watch live now
+                  Watch live grid
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="gap-2">
                 <Link to="/i-witness">
                   <Camera className="h-4 w-4 text-primary" />
-                  File an i-Witness report
+                  File i-Witness report
                 </Link>
               </Button>
             </div>
 
-            <p className="mt-4 text-xs text-muted-foreground">
-              No account needed to watch, read or train. You only sign in to comment or submit
-              evidence.
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Watching, reading &amp; training require no account. Sign in only to comment or submit evidence.
             </p>
           </div>
 
           {/* Numbers */}
-          <dl className="mt-14 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+          <dl className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {NUMBERS.map((item) => (
-              <div key={item.label} className="plate p-5 text-center">
+              <div key={item.label} className="plate p-4 text-center">
                 <dd className="font-display text-2xl font-extrabold text-primary sm:text-3xl">
                   {item.value}
                 </dd>
-                <dt className="mt-1 text-[11px] font-bold uppercase tracking-wide text-foreground">
+                <dt className="mt-1 text-[10px] font-bold uppercase tracking-wide text-foreground">
                   {item.label}
                 </dt>
-                <p className="mt-1 text-[11px] text-muted-foreground">{item.sub}</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">{item.sub}</p>
               </div>
             ))}
           </dl>
@@ -188,20 +184,18 @@ function HomePage() {
       </section>
 
       {/* Live preview */}
-      <section className="mx-auto max-w-7xl px-4 py-16">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-          <div className="max-w-xl">
-            <h2 className="font-display text-display-sm font-bold">On air right now</h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              The public grid, exactly as the Command Center has it configured. Change the tile
-              count, maximise any feed, or open the full viewer with the live conversation
-              alongside.
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 className="font-display text-display-sm font-bold">Live Grid Preview</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Real-time feeds curated by Command Center operators.
             </p>
           </div>
-          <Button asChild variant="outline" className="gap-1.5">
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
             <Link to="/live">
               Full viewer
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
         </div>
@@ -211,32 +205,28 @@ function HomePage() {
 
       {/* Pillars */}
       <section className="border-y bg-secondary/40">
-        <div className="mx-auto max-w-7xl px-4 py-16">
-          <div className="mx-auto max-w-2xl text-center">
-            <Badge className="mb-3 bg-primary/12 text-primary">What DIGITs actually does</Badge>
-            <h2 className="font-display text-display-sm font-bold">Four jobs, done properly</h2>
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              Not a dashboard of promises. Each of these is a working part of the platform you can
-              use today.
-            </p>
+        <div className="mx-auto max-w-7xl px-4 py-12">
+          <div className="mx-auto max-w-xl text-center">
+            <Badge className="mb-2.5 bg-primary/12 text-primary">Core Platform</Badge>
+            <h2 className="font-display text-display-sm font-bold">Four Core Tools</h2>
           </div>
 
-          <div className="mt-10 grid gap-5 md:grid-cols-2">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {PILLARS.map((pillar) => (
-              <article key={pillar.title} className="plate-interactive flex flex-col p-6">
-                <span className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-primary/12 text-primary">
+              <article key={pillar.title} className="plate-interactive flex flex-col p-5">
+                <span className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-primary/12 text-primary">
                   <pillar.icon className="h-5 w-5" />
                 </span>
-                <h3 className="font-display text-lg font-bold">{pillar.title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">
+                <h3 className="font-display text-base font-bold">{pillar.title}</h3>
+                <p className="mt-1.5 flex-1 text-xs leading-relaxed text-muted-foreground">
                   {pillar.body}
                 </p>
                 <Link
                   to={pillar.href}
-                  className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                 >
                   {pillar.cta}
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </article>
             ))}
@@ -245,27 +235,24 @@ function HomePage() {
       </section>
 
       {/* Flow */}
-      <section className="mx-auto max-w-7xl px-4 py-16">
-        <div className="mx-auto max-w-2xl text-center">
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <div className="mx-auto max-w-xl text-center">
           <h2 className="font-display text-display-sm font-bold">
-            From the queue to the public record
+            Evidence Verification Pipeline
           </h2>
-          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-            Four steps, usually inside a few minutes on election day.
-          </p>
         </div>
 
-        <ol className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FLOW.map((item) => (
-            <li key={item.step} className="plate relative overflow-hidden p-6">
-              <span className="absolute right-4 top-3 font-display text-4xl font-extrabold text-primary/10">
+            <li key={item.step} className="plate relative overflow-hidden p-5">
+              <span className="absolute right-3 top-2 font-display text-3xl font-extrabold text-primary/10">
                 {item.step}
               </span>
-              <span className="grid h-10 w-10 place-items-center rounded-lg bg-accent/18 text-accent-foreground dark:text-accent">
-                <item.icon className="h-5 w-5" />
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-accent/18 text-accent-foreground dark:text-accent">
+                <item.icon className="h-4.5 w-4.5" />
               </span>
-              <h3 className="mt-3 font-display text-base font-bold">{item.title}</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
+              <h3 className="mt-2.5 font-display text-sm font-bold">{item.title}</h3>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
             </li>
           ))}
         </ol>
@@ -273,49 +260,42 @@ function HomePage() {
 
       {/* Access model */}
       <section className="border-t bg-secondary/40">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 lg:grid-cols-2 lg:items-center">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 lg:grid-cols-2 lg:items-center">
           <div>
-            <Badge className="mb-3 bg-accent/20 text-accent-foreground dark:text-accent">
-              Open by default
+            <Badge className="mb-2 bg-accent/20 text-accent-foreground dark:text-accent">
+              Open Access
             </Badge>
             <h2 className="font-display text-display-sm font-bold">
-              Transparency you don't have to sign up for
+              Transparent &amp; Accessible
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-              A transparency platform that hides behind a signup form isn't transparent. Everything
-              you can watch, read or learn on DIGITs is open to anyone with a browser — on the web,
-              or through the app from the Play Store, the App Store, or installed straight from this
-              page.
+            <p className="mt-2 text-xs leading-relaxed text-muted-foreground sm:text-sm">
+              All live feeds, reports, and training materials are freely accessible without an account. Account registration is only required to post comments or submit verified evidence.
             </p>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-              We ask for an account in exactly two places: posting a comment, and submitting
-              evidence. Both attach your name to a public record, so both need to be accountable.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild className="gap-2">
+            <div className="mt-5 flex flex-wrap gap-2.5">
+              <Button asChild size="sm" className="gap-2">
                 <Link to="/live">
                   <Eye className="h-4 w-4" />
-                  Start watching
+                  Watch live
                 </Link>
               </Button>
-              <Button asChild variant="outline">
-                <Link to="/auth">Create a free account</Link>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/auth">Create free account</Link>
               </Button>
             </div>
           </div>
 
           <ul className="plate divide-y p-2">
             {ACCESS.map((item) => (
-              <li key={item.label} className="flex items-start gap-3 px-4 py-3.5">
+              <li key={item.label} className="flex items-center gap-3 px-4 py-3">
                 {item.open ? (
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
                 ) : (
-                  <Lock className="mt-0.5 h-4 w-4 shrink-0 text-accent-foreground dark:text-accent" />
+                  <Lock className="h-4 w-4 shrink-0 text-accent-foreground dark:text-accent" />
                 )}
-                <span className="text-sm">
+                <span className="text-xs font-medium">
                   {item.label}
-                  <span className="ml-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    {item.open ? "No account" : "Sign in"}
+                  <span className="ml-2 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    {item.open ? "Free" : "Sign in"}
                   </span>
                 </span>
               </li>
@@ -325,31 +305,31 @@ function HomePage() {
       </section>
 
       {/* Evidence integrity */}
-      <section className="mx-auto max-w-7xl px-4 py-16">
-        <div className="grid gap-5 md:grid-cols-3">
+      <section className="mx-auto max-w-7xl px-4 py-12">
+        <div className="grid gap-4 md:grid-cols-3">
           {[
             {
               icon: Clock,
-              title: "Yours for 24 hours, ours for the record",
-              body: "Media clears from your in-app history after a day so a lost phone is not a lost identity. The evidence itself stays in the private vault where only the Command Center can reach it.",
+              title: "Vault Protection",
+              body: "Evidence is stored in encrypted vault storage. In-app media cache auto-clears after 24 hours for safety.",
             },
             {
               icon: MapPin,
-              title: "Every claim is placed",
-              body: "Location must be on before the camera opens. Coordinates, accuracy radius and capture time are bound to the file, and a SHA-256 hash makes later edits detectable.",
+              title: "GPS & NIN Bound",
+              body: "Coordinates, timestamp, and NIN identity are cryptographic hashes tied directly to captured evidence.",
             },
             {
               icon: Users2,
-              title: "Roles, not free-for-all",
-              body: "Seven roles from Super Admin to Viewer, enforced in the database rather than the interface. Operators curate the grid; reviewers verify evidence; nobody can quietly promote themselves.",
+              title: "Role Enforcement",
+              body: "Database row-level security enforces access roles across all triage and verification steps.",
             },
           ].map((item) => (
-            <article key={item.title} className="plate p-6">
-              <span className="grid h-10 w-10 place-items-center rounded-lg bg-primary/12 text-primary">
-                <item.icon className="h-5 w-5" />
+            <article key={item.title} className="plate p-5">
+              <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/12 text-primary">
+                <item.icon className="h-4.5 w-4.5" />
               </span>
-              <h3 className="mt-3 font-display text-base font-bold">{item.title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{item.body}</p>
+              <h3 className="mt-2.5 font-display text-sm font-bold">{item.title}</h3>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.body}</p>
             </article>
           ))}
         </div>
@@ -358,33 +338,32 @@ function HomePage() {
       {/* Closing CTA */}
       <section className="bg-navy-panel text-white">
         <div className="bg-weave">
-          <div className="mx-auto flex max-w-4xl flex-col items-center gap-5 px-4 py-20 text-center">
-            <Sparkles className="h-9 w-9 text-brand-gold" />
+          <div className="mx-auto flex max-w-4xl flex-col items-center gap-4 px-4 py-16 text-center">
+            <Sparkles className="h-8 w-8 text-brand-gold" />
             <h2 className="font-display text-display-sm font-extrabold">
-              An election nobody is watching is an election nobody can dispute
+              Nigeria, Watched By Nigerians
             </h2>
-            <p className="max-w-2xl text-sm leading-relaxed text-white/70 sm:text-base">
-              Train as an observer, file what you witness, or simply watch and hold the record.
-              Every role matters, and every one of them is open to you.
+            <p className="max-w-xl text-xs leading-relaxed text-white/70 sm:text-sm">
+              Train as an observer, file i-Witness reports, or watch the public live grid.
             </p>
             <div className="mt-2 flex flex-wrap justify-center gap-3">
               <Button
                 asChild
-                size="lg"
+                size="default"
                 className="gap-2 bg-brand-gold font-bold text-navy-deep hover:bg-brand-gold/90"
               >
-                <Link to="/get-involved">
+                <Link to="/training">
                   <GraduationCap className="h-4 w-4" />
-                  Become a certified DIGEO
+                  DIGEO Observer Academy
                 </Link>
               </Button>
               <Button
                 asChild
-                size="lg"
+                size="default"
                 variant="outline"
                 className="border-white/25 bg-white/5 text-white hover:bg-white/12 hover:text-white"
               >
-                <Link to="/live">Watch the live grid</Link>
+                <Link to="/live">Watch live grid</Link>
               </Button>
             </div>
           </div>

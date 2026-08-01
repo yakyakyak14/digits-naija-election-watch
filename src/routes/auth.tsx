@@ -378,7 +378,7 @@ function AuthPage() {
 
             <p className="mt-6 flex items-center justify-center gap-1.5 text-center text-[11px] text-white/50">
               <ShieldCheck className="h-3.5 w-3.5 text-brand-green-bright" />
-              Sessions secured by Supabase Auth. Your NIN is never shown publicly.
+              Sessions secured by Encrypted Cloud Auth. Your NIN is never shown publicly.
             </p>
           </div>
 

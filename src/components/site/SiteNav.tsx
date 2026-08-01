@@ -22,9 +22,9 @@ import { cn } from "@/lib/utils";
 const LINKS = [
   { to: "/live", label: "Watch live" },
   { to: "/i-witness", label: "i-Witness" },
+  { to: "/training", label: "DIGEO Exams" },
   { to: "/features", label: "Platform" },
   { to: "/how-it-works", label: "How it works" },
-  { to: "/get-involved", label: "Become a DIGEO" },
   { to: "/about", label: "About" },
 ] as const;
 

@@ -11,15 +11,19 @@ interface BeforeInstallPromptEvent extends Event {
 const DISMISS_KEY = "digits-install-dismissed";
 
 /**
- * Registers the service worker and offers an install affordance when the browser
- * says the app is installable. Dismissal is remembered for 30 days — a
- * transparency tool should not nag.
+ * PWA Install Affordance.
+ * NOTE: PWA Popup disabled by request until explicitly re-enabled.
  */
 export function InstallPrompt() {
+  // PWA Popup temporarily paused/disabled until requested back on
+  const PWA_PROMPT_ENABLED = false;
+
   const [event, setEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (!PWA_PROMPT_ENABLED) return;
+
     if ("serviceWorker" in navigator && import.meta.env.PROD) {
       navigator.serviceWorker.register("/sw.js").catch(() => {
         /* offline support is a bonus, never a blocker */
@@ -37,7 +41,9 @@ export function InstallPrompt() {
 
     window.addEventListener("beforeinstallprompt", onPrompt);
     return () => window.removeEventListener("beforeinstallprompt", onPrompt);
-  }, []);
+  }, [PWA_PROMPT_ENABLED]);
+
+  if (!PWA_PROMPT_ENABLED || !visible || !event) return null;
 
   function dismiss() {
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
@@ -51,8 +57,6 @@ export function InstallPrompt() {
     if (choice.outcome === "accepted") setVisible(false);
     else dismiss();
   }
-
-  if (!visible || !event) return null;
 
   return (
     <aside
