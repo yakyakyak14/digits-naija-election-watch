@@ -49,6 +49,38 @@ async function invoke(body: Record<string, unknown>): Promise<TokenGrant> {
   return data;
 }
 
+export type StreamingReason = "ok" | "unset" | "rejected" | "unreachable" | string;
+
+export interface StreamingStatus {
+  transport: StreamTransport;
+  /** Env var names still missing, for staff. Never values. */
+  missing: string[];
+  /**
+   * Why streaming is unavailable:
+   *   unset       the variables are not set
+   *   rejected    they are set but LiveKit refused them (mismatched pair, or a
+   *               pair belonging to a different project than LIVEKIT_URL)
+   *   unreachable LIVEKIT_URL did not respond
+   */
+  reason: StreamingReason;
+}
+
+/**
+ * Whether live video is switched on, asked before any camera or location
+ * permission is requested. Mints no token, so it is cheap and unauthenticated.
+ */
+export async function getStreamingStatus(): Promise<StreamingStatus> {
+  const { data, error } = await supabase.functions.invoke<StreamingStatus>("livekit-token", {
+    body: { action: "config" },
+  });
+  if (error || !data) return { transport: "fallback", missing: [], reason: "unreachable" };
+  return {
+    transport: data.transport ?? "fallback",
+    missing: data.missing ?? [],
+    reason: data.reason ?? "unset",
+  };
+}
+
 /** Subscribe-only token for the public grid. Works without an account. */
 export function mintViewerToken() {
   return invoke({ action: "viewer" });
@@ -93,8 +125,10 @@ export async function mintPublisherToken(request: PublisherRequest): Promise<Pub
     !grant.room ||
     !grant.streamId
   ) {
+    // Plain language: this surfaces to an observer standing at a polling unit,
+    // not to whoever administers the deployment.
     throw new Error(
-      "Live video provider is not configured yet. Set LIVEKIT_URL, LIVEKIT_API_KEY and LIVEKIT_API_SECRET in the Supabase function secrets.",
+      "Live video is not switched on for this platform yet, so your broadcast could not start. Your report forms and i-Witness capture still work.",
     );
   }
 

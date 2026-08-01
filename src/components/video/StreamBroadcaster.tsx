@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { LocalVideoTrack, Room } from "livekit-client";
 import {
   CircleStop,
   Loader2,
   Radio,
   ShieldCheck,
+  SatelliteDish,
   SwitchCamera,
   TriangleAlert,
   Wifi,
@@ -16,7 +18,7 @@ import { Field, FieldGrid, SelectControl, TextControl } from "@/components/forms
 import { useViewer } from "@/hooks/useViewer";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
-import { endBroadcast, mintPublisherToken, PUBLIC_ROOM } from "@/lib/streaming";
+import { endBroadcast, getStreamingStatus, mintPublisherToken, PUBLIC_ROOM } from "@/lib/streaming";
 import { lgasForState, STATE_NAMES } from "@/lib/nigeria";
 import { cn } from "@/lib/utils";
 
@@ -31,8 +33,20 @@ type Status = "idle" | "starting" | "live" | "stopping" | "error";
  * camera never reaches the room public viewers can subscribe to.
  */
 export function StreamBroadcaster() {
-  const { user, displayName, profile, isObserver, isBroadcastOperator } = useViewer();
+  const { user, displayName, profile, isObserver, isBroadcastOperator, isAdmin } = useViewer();
   const geo = useGeolocation();
+
+  /*
+   * Asked before anything else. Live video needs a WebRTC provider; when one is
+   * not configured the observer is told here, up front, rather than after
+   * granting camera and location and pressing Go live.
+   */
+  const streaming = useQuery({
+    queryKey: ["streaming-status"],
+    queryFn: getStreamingStatus,
+    staleTime: 120_000,
+  });
+  const providerReady = streaming.data?.transport === "livekit";
 
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +131,10 @@ export function StreamBroadcaster() {
   );
 
   async function goLive() {
+    if (!providerReady) {
+      toast.error("Live video is not switched on for this platform yet.");
+      return;
+    }
     if (!title.trim() || !stateName || !lga) {
       toast.error("Add a title, state and LGA before going live.");
       return;
@@ -263,6 +281,57 @@ export function StreamBroadcaster() {
           </>
         )}
       </div>
+
+      {/* Provider unavailable — say so before any permission is requested. */}
+      {streaming.isSuccess && !providerReady && (
+        <div className="flex items-start gap-3 rounded-lg border border-accent/40 bg-accent/10 p-4">
+          <SatelliteDish className="mt-0.5 h-5 w-5 shrink-0 text-accent-foreground dark:text-accent" />
+          <div className="min-w-0 space-y-1">
+            <p className="text-sm font-semibold">Live video is not switched on yet</p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Broadcasting needs a video provider that has not been connected to this platform yet,
+              so Go live is unavailable. Everything else still works — file i-Witness evidence,
+              complete your observation checklists, and submit incident reports as normal.
+            </p>
+            {isAdmin && (
+              <p className="pt-1 text-[11px] text-muted-foreground">
+                <span className="font-semibold">Admin:</span>{" "}
+                {streaming.data.reason === "rejected" ? (
+                  <>
+                    LiveKit rejected the credentials. The API key and secret must come from the same
+                    LiveKit project as{" "}
+                    <code className="rounded bg-muted px-1 py-0.5">LIVEKIT_URL</code> — re-copy both
+                    from that project&apos;s Keys page, then run{" "}
+                    <code className="rounded bg-muted px-1 py-0.5">
+                      npm run fn:deploy -- --secrets
+                    </code>
+                    .
+                  </>
+                ) : streaming.data.reason === "unreachable" ? (
+                  <>
+                    <code className="rounded bg-muted px-1 py-0.5">LIVEKIT_URL</code> did not
+                    respond. Check the host is correct and the project is running.
+                  </>
+                ) : (
+                  <>
+                    set{" "}
+                    <code className="rounded bg-muted px-1 py-0.5">
+                      {streaming.data.missing.join(", ") ||
+                        "LIVEKIT_URL, LIVEKIT_API_KEY, LIVEKIT_API_SECRET"}
+                    </code>{" "}
+                    in <code className="rounded bg-muted px-1 py-0.5">.env</code>, then run{" "}
+                    <code className="rounded bg-muted px-1 py-0.5">
+                      npm run fn:deploy -- --secrets
+                    </code>
+                    .
+                  </>
+                )}{" "}
+                See the LiveKit section of the README.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {error && (
         <p className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">

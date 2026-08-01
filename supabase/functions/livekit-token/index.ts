@@ -46,14 +46,16 @@ function base64url(input: Uint8Array | string): string {
 }
 
 interface VideoGrant {
-  room: string;
-  roomJoin: boolean;
-  canSubscribe: boolean;
-  canPublish: boolean;
-  canPublishData: boolean;
-  roomAdmin: boolean;
-  roomCreate: boolean;
-  hidden: boolean;
+  room?: string;
+  roomJoin?: boolean;
+  canSubscribe?: boolean;
+  canPublish?: boolean;
+  canPublishData?: boolean;
+  roomAdmin?: boolean;
+  roomCreate?: boolean;
+  hidden?: boolean;
+  /** Server-API only: used by the credential probe, never by a client token. */
+  roomList?: boolean;
 }
 
 async function signToken(opts: {
@@ -138,6 +140,9 @@ async function resolveCaller(req: Request) {
   return { admin, userId: data.user.id, email: data.user.email ?? "", roles };
 }
 
+/** Short-lived cache for the credential probe, so config calls stay cheap. */
+let configCache: { ok: boolean; reason: string; at: number } | null = null;
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "Use POST." }, 405);
@@ -146,16 +151,79 @@ Deno.serve(async (req) => {
   const apiKey = Deno.env.get("LIVEKIT_API_KEY");
   const apiSecret = Deno.env.get("LIVEKIT_API_SECRET");
 
-  // No provider configured: report fallback so the grid plays recorded sources.
-  if (!livekitUrl || !apiKey || !apiSecret) {
-    return json({ transport: "fallback", token: null, url: null, room: null });
-  }
+  const configured = Boolean(livekitUrl && apiKey && apiSecret);
 
   let body: Record<string, any>;
   try {
     body = await req.json();
   } catch {
     return json({ error: "Invalid JSON body." }, 400);
+  }
+
+  /*
+   * Status probe. The broadcaster asks this BEFORE showing its form, so an
+   * observer is told up front that live video is unavailable instead of
+   * discovering it after granting camera and location and pressing Go live.
+   * Mints nothing, so it needs no auth and is safe to call on every mount.
+   */
+  if (body.action === "config") {
+    const missing = [
+      !livekitUrl ? "LIVEKIT_URL" : null,
+      !apiKey ? "LIVEKIT_API_KEY" : null,
+      !apiSecret ? "LIVEKIT_API_SECRET" : null,
+    ].filter(Boolean);
+
+    if (!configured) {
+      return json({ transport: "fallback", missing, reason: "unset" });
+    }
+
+    /*
+     * Variables being present does not mean they work. A mismatched key/secret
+     * pair, or a pair belonging to a different project than LIVEKIT_URL, mints a
+     * perfectly well-formed token that the server then rejects — the observer
+     * would press Go live, hand over camera and location, and only then fail.
+     * So actually ask LiveKit, and cache the answer briefly.
+     */
+    const cached = configCache;
+    if (cached && Date.now() - cached.at < 60_000) {
+      return json({ transport: cached.ok ? "livekit" : "fallback", missing: [], reason: cached.reason });
+    }
+
+    let ok = false;
+    let reason = "ok";
+    try {
+      const probeToken = await signToken({
+        apiKey: apiKey!,
+        apiSecret: apiSecret!,
+        identity: "config-probe",
+        name: "config-probe",
+        ttlSeconds: 60,
+        grant: { roomList: true },
+      });
+      const httpBase = livekitUrl!.replace(/^wss:/, "https:").replace(/^ws:/, "http:").replace(/\/$/, "");
+      const probe = await fetch(`${httpBase}/twirp/livekit.RoomService/ListRooms`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${probeToken}`, "Content-Type": "application/json" },
+        body: "{}",
+        signal: AbortSignal.timeout(5000),
+      });
+      ok = probe.ok;
+      if (!probe.ok) {
+        reason = probe.status === 401 ? "rejected" : `http_${probe.status}`;
+        console.error("[livekit] credential probe failed", probe.status, (await probe.text()).slice(0, 200));
+      }
+    } catch (err) {
+      reason = "unreachable";
+      console.error("[livekit] credential probe error", err);
+    }
+
+    configCache = { ok, reason, at: Date.now() };
+    return json({ transport: ok ? "livekit" : "fallback", missing: [], reason });
+  }
+
+  // No provider configured: report fallback so the grid plays recorded sources.
+  if (!configured) {
+    return json({ transport: "fallback", token: null, url: null, room: null });
   }
 
   try {
