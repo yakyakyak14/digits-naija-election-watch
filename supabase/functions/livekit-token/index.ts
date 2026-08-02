@@ -122,6 +122,69 @@ function publisher(room: string): VideoGrant {
 }
 
 /** Resolves the caller from their Supabase bearer token and reads their roles. */
+/**
+ * Ends feeds whose publisher is no longer in either room.
+ *
+ * A live_streams row stays `live` forever if the broadcaster does not press End:
+ * a closed tab, a dead battery, or lost signal all leave one behind. The public
+ * grid then renders a tile for a feed nobody is publishing, which is exactly the
+ * "tiles but no video" visitors reported — two orphaned rows were on the grid
+ * with zero publishers in the room.
+ *
+ * LiveKit is the authority on who is actually broadcasting, so reconcile against
+ * it. The grace period avoids ending a feed that is mid-reconnect, which is
+ * normal for a few seconds when an operator approves and the publisher moves
+ * from the intake room to the public one.
+ */
+async function reapDeadFeeds(
+  admin: ReturnType<typeof createClient>,
+  livekitUrl: string,
+  apiKey: string,
+  apiSecret: string,
+): Promise<string[]> {
+  const httpBase = livekitUrl.replace(/^wss:/, "https:").replace(/^ws:/, "http:").replace(/\/$/, "");
+  const live: string[] = [];
+
+  for (const room of [PUBLIC_ROOM, INTAKE_ROOM]) {
+    const probe = await signToken({
+      apiKey,
+      apiSecret,
+      identity: "reaper",
+      name: "reaper",
+      ttlSeconds: 60,
+      grant: { roomAdmin: true, room },
+    });
+    const res = await fetch(`${httpBase}/twirp/livekit.RoomService/ListParticipants`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${probe}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ room }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) return live; // Cannot prove anyone is gone — leave rows alone.
+
+    const payload = (await res.json()) as { participants?: Array<{ identity: string }> };
+    for (const participant of payload.participants ?? []) {
+      if (participant.identity.startsWith("pub-")) live.push(participant.identity);
+    }
+  }
+
+  const cutoff = new Date(Date.now() - 90_000).toISOString();
+  let query = admin
+    .from("live_streams")
+    .update({ status: "ended", ended_at: new Date().toISOString(), is_approved: false })
+    .eq("status", "live")
+    .lt("started_at", cutoff);
+
+  if (live.length > 0) {
+    query = query.not("livekit_identity", "in", `(${live.map((i) => `"${i}"`).join(",")})`);
+  }
+
+  const { error } = await query;
+  if (error) console.error("[livekit] reap failed", error.message);
+
+  return live;
+}
+
 async function resolveCaller(req: Request) {
   const authHeader = req.headers.get("Authorization") ?? "";
   const token = authHeader.replace(/^Bearer\s+/i, "");
@@ -144,6 +207,8 @@ async function resolveCaller(req: Request) {
 let configCache: { ok: boolean; reason: string; at: number } | null = null;
 /** Short-lived cache for the audience count. */
 let statsCache: { viewers: number; publishers: number; at: number } | null = null;
+/** Last time dead feeds were reconciled against LiveKit. */
+let reapedAt = 0;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -265,6 +330,18 @@ Deno.serve(async (req) => {
       const all = payload.participants ?? [];
       const publishers = all.filter((p) => p.identity.startsWith("pub-")).length;
       const viewers = all.length - publishers;
+
+      // Reconcile the feed list against reality while we are here, at most once
+      // a minute regardless of how many viewers are polling.
+      if (!reapedAt || Date.now() - reapedAt > 60_000) {
+        reapedAt = Date.now();
+        const svcUrl = Deno.env.get("SUPABASE_URL")!;
+        const svcKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const admin = createClient(svcUrl, svcKey, { auth: { persistSession: false } });
+        await reapDeadFeeds(admin, livekitUrl!, apiKey!, apiSecret!).catch((e) =>
+          console.error("[livekit] reap error", e),
+        );
+      }
 
       statsCache = { viewers, publishers, at: Date.now() };
       return json({ viewers, publishers });
