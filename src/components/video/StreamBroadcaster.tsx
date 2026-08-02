@@ -3,7 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import type { LocalVideoTrack, Room } from "livekit-client";
 import {
   CircleStop,
+  Eye,
   Loader2,
+  Mic,
+  MicOff,
   Radio,
   ShieldCheck,
   SatelliteDish,
@@ -18,7 +21,13 @@ import { Field, FieldGrid, SelectControl, TextControl } from "@/components/forms
 import { useViewer } from "@/hooks/useViewer";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { supabase } from "@/integrations/supabase/client";
-import { endBroadcast, getStreamingStatus, mintPublisherToken, PUBLIC_ROOM } from "@/lib/streaming";
+import {
+  endBroadcast,
+  getRoomStats,
+  getStreamingStatus,
+  mintPublisherToken,
+  PUBLIC_ROOM,
+} from "@/lib/streaming";
 import { lgasForState, STATE_NAMES } from "@/lib/nigeria";
 import { cn } from "@/lib/utils";
 
@@ -54,6 +63,18 @@ export function StreamBroadcaster() {
   const [room, setRoom] = useState<string>("");
   const [isApproved, setIsApproved] = useState(false);
   const [facing, setFacing] = useState<"environment" | "user">("environment");
+  const [micOn, setMicOn] = useState(true);
+
+  // Audience size for the public room, counted by the SFU (viewers are hidden
+  // from each other, so a publisher cannot count them locally either).
+  const stats = useQuery({
+    queryKey: ["live-room-stats"],
+    queryFn: getRoomStats,
+    refetchInterval: 10_000,
+    enabled: status === "live" && isApproved,
+  });
+  const viewers = stats.data?.viewers ?? 0;
+  const [elapsed, setElapsed] = useState(0);
 
   const [title, setTitle] = useState("");
   const [stateName, setStateName] = useState(profile?.state ?? "");
@@ -62,6 +83,7 @@ export function StreamBroadcaster() {
   const [pollingUnit, setPollingUnit] = useState(profile?.polling_unit ?? "");
 
   const previewRef = useRef<HTMLVideoElement>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const roomRef = useRef<Room | null>(null);
   const trackRef = useRef<LocalVideoTrack | null>(null);
 
@@ -76,6 +98,49 @@ export function StreamBroadcaster() {
   }, []);
 
   useEffect(() => () => void teardown(), [teardown]);
+
+  /*
+   * Keep the screen awake while broadcasting. An observer props the phone up and
+   * leaves it: without this the display sleeps, and on most phones that suspends
+   * the capture pipeline and the feed goes black at the polling unit.
+   */
+  useEffect(() => {
+    if (status !== "live") return;
+
+    let released = false;
+    const acquire = async () => {
+      try {
+        wakeLockRef.current = await navigator.wakeLock?.request("screen");
+      } catch {
+        /* denied or unsupported — broadcasting still works */
+      }
+    };
+    void acquire();
+
+    // Browsers drop the lock whenever the tab is hidden; take it again on return.
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && !released) void acquire();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+
+    return () => {
+      released = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      void wakeLockRef.current?.release().catch(() => undefined);
+      wakeLockRef.current = null;
+    };
+  }, [status]);
+
+  // Elapsed broadcast time.
+  useEffect(() => {
+    if (status !== "live") {
+      setElapsed(0);
+      return;
+    }
+    const started = Date.now();
+    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [status]);
 
   /** Connects (or reconnects) the publisher to whichever room approval allows. */
   const connect = useCallback(
@@ -155,6 +220,15 @@ export function StreamBroadcaster() {
       setStatus("error");
       toast.error(message);
     }
+  }
+
+  function toggleMic() {
+    const room = roomRef.current;
+    if (!room) return;
+    const next = !micOn;
+    setMicOn(next);
+    void room.localParticipant.setMicrophoneEnabled(next);
+    toast.info(next ? "Microphone on" : "Microphone muted");
   }
 
   async function stop() {
@@ -254,7 +328,21 @@ export function StreamBroadcaster() {
       </header>
 
       <div className="relative aspect-video overflow-hidden rounded-xl border border-white/10 bg-black">
-        <video ref={previewRef} autoPlay muted playsInline className="h-full w-full object-cover" />
+        <video
+          ref={previewRef}
+          autoPlay
+          muted
+          playsInline
+          className={cn(
+            "h-full w-full object-cover",
+            // Mirror the SELF-VIEW on the front camera only, the way a mirror or
+            // any video-call app behaves — without it, moving left appears to
+            // move right and framing yourself feels inverted. The rear camera is
+            // never mirrored, and this is CSS on the local preview only, so what
+            // viewers receive is unaffected either way.
+            facing === "user" && "-scale-x-100",
+          )}
+        />
         {!live && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
             <Radio className="h-8 w-8" />
@@ -266,18 +354,53 @@ export function StreamBroadcaster() {
             <span className="absolute left-3 top-3 flex items-center gap-1.5 rounded bg-live px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-white" />
               Live
+              <span className="ml-1 font-mono tabular-nums">
+                {String(Math.floor(elapsed / 3600)).padStart(2, "0")}:
+                {String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0")}:
+                {String(elapsed % 60).padStart(2, "0")}
+              </span>
             </span>
-            <button
-              type="button"
-              onClick={() => {
-                setFacing((f) => (f === "environment" ? "user" : "environment"));
-                void connect(room).catch(() => toast.error("Could not switch camera."));
-              }}
-              aria-label="Switch camera"
-              className="absolute bottom-3 right-3 grid h-8 w-8 place-items-center rounded-lg bg-black/60 text-white backdrop-blur-sm hover:bg-black/85"
-            >
-              <SwitchCamera className="h-4 w-4" />
-            </button>
+
+            {/* Who is actually watching — the reason to keep the camera steady. */}
+            <span className="absolute right-3 top-3 flex items-center gap-1.5 rounded bg-black/60 px-2 py-1 text-[10px] font-semibold text-white backdrop-blur-sm">
+              <Eye className="h-3 w-3 text-emerald-400" />
+              {isApproved ? `${viewers} watching` : "Command Center only"}
+            </span>
+
+            <div className="absolute bottom-3 right-3 flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={toggleMic}
+                aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
+                title={micOn ? "Mute microphone" : "Unmute microphone"}
+                className="grid h-8 w-8 place-items-center rounded-lg bg-black/60 text-white backdrop-blur-sm hover:bg-black/85"
+              >
+                {micOn ? (
+                  <Mic className="h-4 w-4" />
+                ) : (
+                  <MicOff className="h-4 w-4 text-destructive" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setFacing((f) => (f === "environment" ? "user" : "environment"));
+                  void connect(room).catch(() => toast.error("Could not switch camera."));
+                }}
+                aria-label="Switch camera"
+                title="Switch camera"
+                className="grid h-8 w-8 place-items-center rounded-lg bg-black/60 text-white backdrop-blur-sm hover:bg-black/85"
+              >
+                <SwitchCamera className="h-4 w-4" />
+              </button>
+            </div>
+
+            {facing === "user" && (
+              <span className="absolute bottom-3 left-3 rounded bg-black/60 px-2 py-1 text-[10px] text-white/80 backdrop-blur-sm">
+                Front camera · preview mirrored, viewers see it unmirrored
+              </span>
+            )}
           </>
         )}
       </div>

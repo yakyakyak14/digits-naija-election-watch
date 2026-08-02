@@ -142,6 +142,8 @@ async function resolveCaller(req: Request) {
 
 /** Short-lived cache for the credential probe, so config calls stay cheap. */
 let configCache: { ok: boolean; reason: string; at: number } | null = null;
+/** Short-lived cache for the audience count. */
+let statsCache: { viewers: number; publishers: number; at: number } | null = null;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
@@ -219,6 +221,57 @@ Deno.serve(async (req) => {
 
     configCache = { ok, reason, at: Date.now() };
     return json({ transport: ok ? "livekit" : "fallback", missing: [], reason });
+  }
+
+  /*
+   * Audience size for the public room.
+   *
+   * Viewer tokens are minted `hidden: true` so thousands of watchers do not show
+   * up in every other participant's room state — which also makes them
+   * uncountable from the browser. The server API still sees them, so the count
+   * is taken here. Publishers use a `pub-` identity and are excluded.
+   *
+   * Cached briefly: the grid polls this, and it must not turn into one LiveKit
+   * API call per viewer per interval.
+   */
+  if (body.action === "stats") {
+    if (!configured) return json({ viewers: 0, publishers: 0 });
+
+    const cached = statsCache;
+    if (cached && Date.now() - cached.at < 5000) {
+      return json({ viewers: cached.viewers, publishers: cached.publishers });
+    }
+
+    try {
+      const probeToken = await signToken({
+        apiKey: apiKey!,
+        apiSecret: apiSecret!,
+        identity: "stats-probe",
+        name: "stats-probe",
+        ttlSeconds: 60,
+        grant: { roomAdmin: true, room: PUBLIC_ROOM },
+      });
+      const httpBase = livekitUrl!.replace(/^wss:/, "https:").replace(/^ws:/, "http:").replace(/\/$/, "");
+      const res = await fetch(`${httpBase}/twirp/livekit.RoomService/ListParticipants`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${probeToken}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ room: PUBLIC_ROOM }),
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (!res.ok) return json({ viewers: 0, publishers: 0 });
+
+      const payload = (await res.json()) as { participants?: Array<{ identity: string }> };
+      const all = payload.participants ?? [];
+      const publishers = all.filter((p) => p.identity.startsWith("pub-")).length;
+      const viewers = all.length - publishers;
+
+      statsCache = { viewers, publishers, at: Date.now() };
+      return json({ viewers, publishers });
+    } catch (err) {
+      console.error("[livekit] stats failed", err);
+      return json({ viewers: 0, publishers: 0 });
+    }
   }
 
   // No provider configured: report fallback so the grid plays recorded sources.

@@ -239,7 +239,10 @@ export function DIGEOTrainingCenter() {
             `digeo-guest-progress-${active.id}`,
             JSON.stringify({ score, passed, timestamp: Date.now() }),
           );
-        } catch (_) {}
+        } catch {
+          // localStorage can be unavailable (private mode, storage full).
+          // Progress is recorded server-side, so a failure here is not fatal.
+        }
       }
 
       if (passed) {

@@ -20,22 +20,54 @@ export type RoomStatus =
  * One subscribe-only LiveKit connection for the whole grid.
  *
  * Efficiency notes:
- *  - `adaptiveStream` lets LiveKit pick a simulcast layer per attached element,
- *    so a 3-across tile pulls ~360p while a maximised tile pulls full quality.
+ *  - `adaptiveStream` is deliberately OFF. It pauses any track whose attached
+ *    element is not intersecting the viewport, and the grid sits below the hero
+ *    on /live — so tiles loaded black and only started if the viewer happened to
+ *    scroll. Measured: off-screen readyState 0 with no frames; scrolled into view
+ *    640x360 readyState 4. Bandwidth is instead controlled explicitly via
+ *    setVideoQuality below, which is deterministic and cannot strand a viewer.
  *  - `dynacast` stops the SFU forwarding layers nobody has attached.
  *  - Tracks are attached to <video> elements by identity, so re-arranging tiles
  *    never tears down the connection.
  *  - The connection is closed on unmount, and on tab-hide we stop attaching new
  *    video so a backgrounded tab costs nothing.
  */
-export function useLiveKitRoom(scope: "public" | "intake", enabled = true) {
+export function useLiveKitRoom(
+  scope: "public" | "intake",
+  enabled = true,
+  /** Tiles on screen. Drives which simulcast layer we ask the SFU for. */
+  density = 1,
+) {
   const [status, setStatus] = useState<RoomStatus>("idle");
   const [transport, setTransport] = useState<StreamTransport>("fallback");
   const [feeds, setFeeds] = useState<Record<string, RemoteFeed>>({});
   const [error, setError] = useState<string | null>(null);
 
   const roomRef = useRef<Room | null>(null);
+  const densityRef = useRef(density);
+  densityRef.current = density;
   const mountedRef = useRef(true);
+
+  /*
+   * Ask the SFU for a simulcast layer that matches how large the tile actually
+   * is: 1-2 tiles HIGH, 3-4 MEDIUM, 5-6 LOW. This replaces what adaptiveStream
+   * did automatically, minus its habit of pausing off-screen tiles.
+   *
+   * Deliberately not a useEffect keyed on `feeds`: setVideoQuality fires track
+   * events, those rebuild `feeds`, and the effect would retrigger itself.
+   */
+  const applyQuality = useCallback(async (room: Room) => {
+    const { VideoQuality } = await import("livekit-client");
+    const d = densityRef.current;
+    const quality = d <= 2 ? VideoQuality.HIGH : d <= 4 ? VideoQuality.MEDIUM : VideoQuality.LOW;
+
+    room.remoteParticipants.forEach((participant) => {
+      participant.videoTrackPublications.forEach((publication) => {
+        if (!publication.isSubscribed) return;
+        publication.setVideoQuality(quality);
+      });
+    });
+  }, []);
 
   const rebuildFeeds = useCallback((room: Room) => {
     const next: Record<string, RemoteFeed> = {};
@@ -103,7 +135,8 @@ export function useLiveKitRoom(scope: "public" | "intake", enabled = true) {
         if (disposed) return;
 
         room = new Room({
-          adaptiveStream: true,
+          // See the note above: adaptiveStream strands off-screen tiles.
+          adaptiveStream: false,
           dynacast: true,
           disconnectOnPageLeave: true,
         });
@@ -116,7 +149,10 @@ export function useLiveKitRoom(scope: "public" | "intake", enabled = true) {
         room
           .on(RoomEvent.ParticipantConnected, refresh)
           .on(RoomEvent.ParticipantDisconnected, refresh)
-          .on(RoomEvent.TrackSubscribed, refresh)
+          .on(RoomEvent.TrackSubscribed, (_t, _pub, _p) => {
+            refresh();
+            if (room) void applyQuality(room);
+          })
           .on(RoomEvent.TrackUnsubscribed, refresh)
           .on(RoomEvent.TrackMuted, refresh)
           .on(RoomEvent.TrackUnmuted, refresh)
@@ -153,7 +189,12 @@ export function useLiveKitRoom(scope: "public" | "intake", enabled = true) {
       roomRef.current = null;
       void current?.disconnect();
     };
-  }, [enabled, scope, rebuildFeeds]);
+  }, [enabled, scope, rebuildFeeds, applyQuality]);
+
+  useEffect(() => {
+    const room = roomRef.current;
+    if (room && status === "connected") void applyQuality(room);
+  }, [density, status, applyQuality]);
 
   return { status, transport, feeds, error, isLive: status === "connected" };
 }

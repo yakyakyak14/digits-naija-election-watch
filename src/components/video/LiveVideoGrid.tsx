@@ -13,7 +13,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StreamTile } from "./StreamTile";
+import { useQuery } from "@tanstack/react-query";
 import { useLiveKitRoom } from "@/hooks/useLiveKitRoom";
+import { getRoomStats } from "@/lib/streaming";
 import {
   resolveGridTiles,
   useBroadcastState,
@@ -42,7 +44,6 @@ export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: L
   const scope = mode === "operator" ? "all" : "public";
   const streamsQuery = useLiveStreams(scope);
   const broadcastQuery = useBroadcastState();
-  const room = useLiveKitRoom(mode === "operator" ? "intake" : "public");
 
   const [tileOverride, setTileOverride] = useState<number | null>(null);
   const [maximized, setMaximized] = useState<string | null>(null);
@@ -61,6 +62,14 @@ export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: L
   const tileCount = tiles.length || (tileOverride ?? state?.tile_count ?? 4);
   const maximizedStream = tiles.find((t) => t.id === maximized) ?? null;
 
+  // Density drives the simulcast layer we request; a maximised tile wants full
+  // quality regardless of how many tiles sit behind it.
+  const room = useLiveKitRoom(
+    mode === "operator" ? "intake" : "public",
+    true,
+    maximizedStream ? 1 : tiles.length || 1,
+  );
+
   // Esc always leaves the maximised view, matching every other video player.
   useEffect(() => {
     if (!maximized) return;
@@ -69,7 +78,25 @@ export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: L
     return () => window.removeEventListener("keydown", onKey);
   }, [maximized]);
 
-  const totalViewers = streams.reduce((sum, s) => sum + (s.viewer_count ?? 0), 0);
+  /*
+   * Audience size, counted by the SFU rather than read from the viewer_count
+   * column (which nothing ever wrote) or from room participants (viewers are
+   * hidden from each other, so the browser cannot see them).
+   */
+  const stats = useQuery({
+    queryKey: ["live-room-stats"],
+    queryFn: getRoomStats,
+    refetchInterval: 10_000,
+    enabled: mode === "public",
+  });
+  const totalViewers = stats.data?.viewers ?? 0;
+
+  // Our own arrival changes the number: recount once we are actually in the room,
+  // otherwise the first figure a viewer sees is the one from before they joined.
+  useEffect(() => {
+    if (room.status === "connected") void stats.refetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room.status]);
   const liveCount = streams.filter((s) => s.status === "live").length;
 
   return (
@@ -258,7 +285,7 @@ export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: L
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-slate-300 sm:px-6">
               <span className="flex items-center gap-1.5 font-medium text-white">
                 <Eye className="h-4 w-4 text-emerald-400" />
-                {(maximizedStream.viewer_count ?? 0).toLocaleString()} watching
+                {totalViewers.toLocaleString()} watching
               </span>
               <span className="truncate">{maximizedStream.stream_title}</span>
               <Badge className="gap-1 bg-primary font-semibold text-primary-foreground">

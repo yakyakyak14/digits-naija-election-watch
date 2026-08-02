@@ -112,6 +112,21 @@ export async function getStreamingStatus(): Promise<StreamingStatus> {
   };
 }
 
+/**
+ * Audience size for the public room, counted server-side.
+ *
+ * Viewer tokens are `hidden`, so watchers are invisible to each other and cannot
+ * be counted in the browser. The Edge Function asks LiveKit, which does see them.
+ */
+export async function getRoomStats(): Promise<{ viewers: number; publishers: number }> {
+  const { data, error } = await supabase.functions.invoke<{ viewers: number; publishers: number }>(
+    "livekit-token",
+    { body: { action: "stats" } },
+  );
+  if (error || !data) return { viewers: 0, publishers: 0 };
+  return { viewers: data.viewers ?? 0, publishers: data.publishers ?? 0 };
+}
+
 /** Subscribe-only token for the public grid. Works without an account. */
 export function mintViewerToken() {
   return invoke({ action: "viewer" });
