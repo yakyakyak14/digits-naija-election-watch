@@ -47,7 +47,13 @@ export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: L
 
   const [tileOverride, setTileOverride] = useState<number | null>(null);
   const [maximized, setMaximized] = useState<string | null>(null);
-  const [muted, setMuted] = useState<Record<string, boolean>>({});
+  /*
+   * Exactly one tile may have audio. Held as the id of the unmuted tile rather
+   * than a muted-per-tile map, so overlapping audio is impossible by
+   * construction instead of something each toggle has to remember to prevent.
+   * null means every tile is silent, which is how the grid starts.
+   */
+  const [unmutedId, setUnmutedId] = useState<string | null>(null);
 
   // Memoised so the `?? []` fallback doesn't hand useMemo a fresh array each
   // render, which would re-resolve the grid (and re-key the tiles) constantly.
@@ -69,6 +75,12 @@ export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: L
     true,
     maximizedStream ? 1 : tiles.length || 1,
   );
+
+  // Drop the audio selection if that feed leaves the grid — otherwise the tile
+  // coming back later would start talking unprompted.
+  useEffect(() => {
+    if (unmutedId && !tiles.some((tile) => tile.id === unmutedId)) setUnmutedId(null);
+  }, [tiles, unmutedId]);
 
   // Esc always leaves the maximised view, matching every other video player.
   useEffect(() => {
@@ -205,8 +217,10 @@ export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: L
               feed={stream.livekit_identity ? room.feeds[stream.livekit_identity] : undefined}
               index={idx}
               density={tileCount}
-              isMuted={muted[stream.id] ?? true}
-              onToggleMute={() => setMuted((m) => ({ ...m, [stream.id]: !(m[stream.id] ?? true) }))}
+              isMuted={unmutedId !== stream.id}
+              onToggleMute={() =>
+                setUnmutedId((current) => (current === stream.id ? null : stream.id))
+              }
               onMaximize={() => setMaximized(stream.id)}
             >
               {mode === "operator" && onToggleApprove && (
@@ -275,9 +289,11 @@ export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: L
               }
               index={0}
               density={1}
-              isMuted={muted[maximizedStream.id] ?? true}
+              isMuted={unmutedId !== maximizedStream.id}
               onToggleMute={() =>
-                setMuted((m) => ({ ...m, [maximizedStream.id]: !(m[maximizedStream.id] ?? true) }))
+                setUnmutedId((current) =>
+                  current === maximizedStream.id ? null : maximizedStream.id,
+                )
               }
               onMaximize={() => setMaximized(null)}
             />
