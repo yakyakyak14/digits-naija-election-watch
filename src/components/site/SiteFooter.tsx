@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { DigitsMark } from "@/components/brand/DigitsLogo";
+import { DigitsLockup } from "@/components/brand/DigitsLogo";
 import { cn } from "@/lib/utils";
 
 /** One row of essentials. Everything else lives in the nav or on its own page. */
@@ -13,9 +13,7 @@ const LINKS = [
 
 /**
  * Global footer, rendered at the base of every page including the Command Center.
- *
- * Kept to a single compact band: a four-column sitemap was repeating the primary
- * navigation and eating a third of the viewport on short pages.
+ * Uses unified DigitsLockup with light tone for dark background.
  */
 export function SiteFooter({ className }: { className?: string }) {
   return (
@@ -26,10 +24,7 @@ export function SiteFooter({ className }: { className?: string }) {
           className="flex shrink-0 items-center gap-2"
           aria-label="DIGITs Election Watch home"
         >
-          <DigitsMark size={26} />
-          <span className="font-display text-sm font-extrabold leading-none">
-            DIGITs<span className="ml-1 text-brand-gold">Election Watch</span>
-          </span>
+          <DigitsLockup size={28} tone="light" showTagline={false} />
         </Link>
 
         <nav aria-label="Footer" className="flex flex-wrap justify-center gap-x-4 gap-y-1.5">
