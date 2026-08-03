@@ -28,8 +28,8 @@ const DEFAULT_SECTIONS: ScrollWorldSection[] = [
     title: "Dawn at the Polling Unit",
     body: "Observers and citizens assemble across Nigeria's 176,846 polling units. Materials arrive, BVAS units are checked, and the watch begins.",
     tags: ["176,846 Units", "BVAS Verification", "Open Sunlight"],
-    accent: "#10b981",
-    bgGradient: "from-emerald-950/40 via-emerald-900/20 to-slate-950",
+    accent: "var(--primary)",
+    bgGradient: "from-primary/20 via-background/60 to-background",
     image:
       "https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=1600&q=80",
     icon: GraduationCap,
@@ -41,8 +41,8 @@ const DEFAULT_SECTIONS: ScrollWorldSection[] = [
     title: "Certified Field Observers",
     body: "DIGEO observers complete 6 rigorous modules covering electoral law, EC8A arithmetic, incident escalation, and non-partisan conduct.",
     tags: ["6 Modules", "70% Pass Mark", "Accredited ID"],
-    accent: "#008751",
-    bgGradient: "from-green-950/40 via-emerald-950/30 to-slate-950",
+    accent: "var(--primary)",
+    bgGradient: "from-primary/30 via-background/60 to-background",
     image:
       "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1600&q=80",
     icon: ShieldCheck,
@@ -57,8 +57,8 @@ const DEFAULT_SECTIONS: ScrollWorldSection[] = [
     title: "GPS & NIN Verified Reports",
     body: "Citizens record live incidents directly with forced GPS location and NIN identity checks. Video and photos are locked at capture time.",
     tags: ["GPS Locked", "NIN Identity", "Gallery Blocked"],
-    accent: "#d4af37",
-    bgGradient: "from-amber-950/30 via-slate-950 to-emerald-950/30",
+    accent: "var(--accent)",
+    bgGradient: "from-accent/25 via-background/60 to-background",
     image:
       "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80",
     icon: Camera,
@@ -73,8 +73,8 @@ const DEFAULT_SECTIONS: ScrollWorldSection[] = [
     title: "Command Center Audit",
     body: "Every report is triaged by automated severity scoring, verified by coordinators against polling unit checklists, and logged immutably.",
     tags: ["4-Stage Triage", "Audit Logged", "Zero Deletions"],
-    accent: "#3b82f6",
-    bgGradient: "from-blue-950/30 via-emerald-950/20 to-slate-950",
+    accent: "var(--primary)",
+    bgGradient: "from-primary/20 via-background/60 to-background",
     image:
       "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1600&q=80",
     icon: CheckCircle2,
@@ -89,8 +89,8 @@ const DEFAULT_SECTIONS: ScrollWorldSection[] = [
     title: "Nigeria, Watched By Nigerians",
     body: "Verified feeds stream directly to the public live grid. 1-to-6 split screen live observer feeds, accessible to every citizen without login.",
     tags: ["6-Way Split", "Free Access", "Live Feeds"],
-    accent: "#10b981",
-    bgGradient: "from-emerald-950/50 via-teal-950/30 to-slate-950",
+    accent: "var(--primary)",
+    bgGradient: "from-primary/35 via-background/60 to-background",
     image:
       "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1600&q=80",
     icon: Video,
@@ -107,9 +107,9 @@ interface ScrollWorldProps {
 }
 
 /**
- * ScrollWorld Component — Integrated from scroll-world skill architecture.
- * Implements a camera-depth scroll-scrubbed journey with background zoom,
- * particle sky atmosphere, section route dots, and smooth text fades.
+ * ScrollWorld Component — Unified font colors and design system tokens.
+ * Implements camera-depth scroll-scrubbed journey with background zoom,
+ * particle atmosphere, section route dots, and smooth typography.
  */
 export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWorldProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -122,7 +122,6 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
       const rect = containerRef.current.getBoundingClientRect();
       const windowHeight = window.innerHeight;
 
-      // Calculate overall progress through container
       const totalScrollable = rect.height - windowHeight;
       if (totalScrollable <= 0) return;
 
@@ -130,7 +129,6 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
       const rawProgress = Math.min(Math.max(currentScroll / totalScrollable, 0), 1);
       setScrollProgress(rawProgress);
 
-      // Determine active section index
       const sectionCount = sections.length;
       const index = Math.min(Math.floor(rawProgress * sectionCount), sectionCount - 1);
       setActiveIndex(index);
@@ -153,7 +151,7 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
     <div
       ref={containerRef}
       className={cn(
-        "relative w-full bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500/30",
+        "relative w-full bg-background text-foreground font-sans selection:bg-primary/20",
         className,
       )}
       style={{ height: `${sections.length * 100}vh` }}
@@ -161,25 +159,24 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
       {/* Fixed Sticky Viewport Stage */}
       <div className="sticky top-0 h-screen w-full overflow-hidden pointer-events-none z-10 flex flex-col justify-between">
         {/* Top Progress Bar */}
-        <div className="absolute top-0 left-0 right-0 h-1.5 bg-slate-900/80 z-50">
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-muted/80 z-50">
           <div
-            className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 transition-all duration-150 ease-out"
+            className="h-full bg-flag-gradient transition-all duration-150 ease-out"
             style={{ width: `${scrollProgress * 100}%` }}
           />
         </div>
 
         {/* Ambient Sky Particle Atmosphere */}
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-500/10 via-transparent to-transparent blur-3xl animate-pulse-slow" />
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-emerald-600/10 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-30">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent blur-3xl" />
+          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 w-96 h-96 rounded-full bg-accent/10 blur-3xl" />
         </div>
 
         {/* Background Images with Depth Zoom & Opacity Crossfade */}
         <div className="absolute inset-0 z-0">
           {sections.map((section, idx) => {
             const isActive = idx === activeIndex;
-            const distance = Math.abs(idx - activeIndex);
 
             return (
               <div
@@ -199,7 +196,7 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
                   className="h-full w-full object-cover object-center filter brightness-[0.35] contrast-110 blur-[1px]"
                 />
                 <div className={cn("absolute inset-0 bg-gradient-to-b", section.bgGradient)} />
-                <div className="absolute inset-0 bg-slate-950/60 mix-blend-multiply" />
+                <div className="absolute inset-0 bg-background/60 mix-blend-multiply" />
               </div>
             );
           })}
@@ -221,8 +218,8 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
                   className={cn(
                     "hidden sm:inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wide backdrop-blur-md border transition-all duration-300",
                     isActive
-                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40 opacity-100 translate-x-0"
-                      : "bg-slate-900/60 text-slate-400 border-slate-800 opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0",
+                      ? "bg-primary/20 text-primary border-primary/40 opacity-100 translate-x-0"
+                      : "bg-card/80 text-muted-foreground border-border opacity-0 translate-x-2 group-hover:opacity-100 group-hover:translate-x-0",
                   )}
                 >
                   {sec.label}
@@ -233,8 +230,8 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
                   className={cn(
                     "h-3 w-3 rounded-full transition-all duration-300 border",
                     isActive
-                      ? "bg-emerald-400 border-emerald-300 scale-125 shadow-[0_0_12px_rgba(16,185,129,0.8)]"
-                      : "bg-slate-700 border-slate-600 group-hover:bg-slate-400 group-hover:scale-110",
+                      ? "bg-primary border-primary scale-125 shadow-glow-green"
+                      : "bg-muted border-border group-hover:bg-muted-foreground group-hover:scale-110",
                   )}
                 />
               </button>
@@ -257,21 +254,21 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
               >
                 {/* Eyebrow & Number */}
                 <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 shadow-glow">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary/20 border border-primary/30 text-primary shadow-glow">
                     <Icon className="h-5 w-5" />
                   </span>
-                  <span className="text-xs font-mono font-bold tracking-widest uppercase text-emerald-400">
+                  <span className="text-xs font-mono font-bold tracking-widest uppercase text-primary">
                     {sec.eyebrow}
                   </span>
                 </div>
 
                 {/* Section Title */}
-                <h2 className="font-display text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white drop-shadow-md leading-tight">
+                <h2 className="font-display text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground drop-shadow-md leading-tight">
                   {sec.title}
                 </h2>
 
                 {/* Body Description */}
-                <p className="text-base sm:text-lg text-slate-300 max-w-2xl leading-relaxed">
+                <p className="text-base sm:text-lg text-muted-foreground max-w-2xl leading-relaxed">
                   {sec.body}
                 </p>
 
@@ -280,7 +277,7 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
                   {sec.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 backdrop-blur-sm shadow-sm"
+                      className="px-3.5 py-1.5 rounded-full text-xs font-semibold bg-primary/15 border border-primary/30 text-primary backdrop-blur-sm shadow-sm"
                     >
                       {tag}
                     </span>
@@ -293,7 +290,7 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
                     {sec.cta.primary && (
                       <Link
                         to={sec.cta.primary.href}
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500 text-slate-950 font-bold text-sm hover:bg-emerald-400 transition-all shadow-lg hover:shadow-emerald-500/20 hover:-translate-y-0.5"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary/90 transition-all shadow-lg hover:-translate-y-0.5"
                       >
                         {sec.cta.primary.label}
                         <ArrowRight className="h-4 w-4" />
@@ -302,7 +299,7 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
                     {sec.cta.secondary && (
                       <Link
                         to={sec.cta.secondary.href}
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900/80 text-slate-200 border border-slate-700 font-semibold text-sm hover:bg-slate-800 hover:text-white transition-all backdrop-blur-md hover:-translate-y-0.5"
+                        className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-card text-card-foreground border border-border font-semibold text-sm hover:bg-accent/15 transition-all backdrop-blur-md hover:-translate-y-0.5"
                       >
                         {sec.cta.secondary.label}
                       </Link>
@@ -316,9 +313,9 @@ export function ScrollWorld({ sections = DEFAULT_SECTIONS, className }: ScrollWo
 
         {/* Bottom Scroll Hint */}
         <div className="pointer-events-none relative z-30 pb-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/80 border border-slate-800 text-[11px] font-mono tracking-widest text-slate-400 uppercase backdrop-blur-md">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-card/80 border border-border text-[11px] font-mono tracking-widest text-muted-foreground uppercase backdrop-blur-md">
             <span>Scroll to Fly Through Workflow</span>
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+            <span className="h-2 w-2 rounded-full bg-primary animate-ping" />
           </div>
         </div>
       </div>

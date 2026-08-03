@@ -66,7 +66,7 @@ function EvidencePlayer({ report }: { report: IWitnessReport }) {
 
   if (failed || (!url && !report.storage_path)) {
     return (
-      <div className="flex aspect-video items-center justify-center bg-navy-deep text-xs text-slate-400">
+      <div className="flex aspect-video items-center justify-center bg-navy-deep text-xs text-muted-foreground">
         Evidence unavailable
       </div>
     );
@@ -75,7 +75,7 @@ function EvidencePlayer({ report }: { report: IWitnessReport }) {
   if (!url) {
     return (
       <div className="flex aspect-video items-center justify-center bg-navy-deep">
-        <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }

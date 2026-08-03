@@ -344,7 +344,7 @@ export function StreamBroadcaster() {
           )}
         />
         {!live && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-muted-foreground">
             <Radio className="h-8 w-8" />
             <span className="text-xs font-medium">Camera preview appears when you go live</span>
           </div>

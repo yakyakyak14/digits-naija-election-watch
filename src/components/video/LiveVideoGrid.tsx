@@ -273,7 +273,7 @@ export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: L
                 size="sm"
                 variant="ghost"
                 onClick={() => setMaximized(null)}
-                className="shrink-0 text-slate-300 hover:bg-white/10 hover:text-white"
+                className="shrink-0 text-muted-foreground hover:bg-accent/15 hover:text-foreground"
               >
                 <Minimize2 className="mr-1.5 h-4 w-4" />
                 Close
@@ -298,7 +298,7 @@ export function LiveVideoGrid({ mode = "public", onToggleApprove, className }: L
               onMaximize={() => setMaximized(null)}
             />
 
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 px-4 py-3 text-xs text-slate-300 sm:px-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-4 py-3 text-xs text-muted-foreground sm:px-6">
               <span className="flex items-center gap-1.5 font-medium text-white">
                 <Eye className="h-4 w-4 text-emerald-400" />
                 {totalViewers.toLocaleString()} watching

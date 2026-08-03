@@ -31,7 +31,7 @@ interface StreamTileProps {
 }
 
 function QualityPip({ quality, live }: { quality: number; live: boolean }) {
-  if (!live) return <WifiOff className="h-3 w-3 text-slate-400" aria-label="Feed offline" />;
+  if (!live) return <WifiOff className="h-3 w-3 text-muted-foreground" aria-label="Feed offline" />;
   if (quality >= 3)
     return <SignalHigh className="h-3 w-3 text-emerald-400" aria-label="Excellent signal" />;
   if (quality === 2)
@@ -145,7 +145,7 @@ export function StreamTile({
             aria-label={`${stream.observer_name} — ${stream.stream_title}`}
           />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-400">
+          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground">
             <Radio className="h-7 w-7 animate-pulse" />
             <span className="text-[11px] font-medium">Waiting for observer signal…</span>
           </div>
@@ -158,7 +158,7 @@ export function StreamTile({
         <div className="min-w-0 space-y-0.5 pr-1 text-white">
           <p className="line-clamp-1 text-[11px] font-bold leading-tight">{stream.stream_title}</p>
           {!compact && (
-            <p className="flex items-center gap-1 text-[10px] text-slate-300">
+            <p className="flex items-center gap-1 text-[10px] text-muted-foreground">
               <ShieldCheck className="h-3 w-3 shrink-0 text-emerald-400" />
               <span className="truncate">{stream.polling_unit ?? "Polling unit pending"}</span>
               <QualityPip quality={feed?.quality ?? 0} live={hasLiveTrack} />
@@ -175,7 +175,7 @@ export function StreamTile({
             className="grid h-7 w-7 place-items-center rounded-lg bg-black/55 text-white backdrop-blur-sm transition-colors hover:bg-black/85"
           >
             {isMuted ? (
-              <VolumeX className="h-3.5 w-3.5 text-slate-300" />
+              <VolumeX className="h-3.5 w-3.5 text-muted-foreground" />
             ) : (
               <Volume2 className="h-3.5 w-3.5 text-emerald-400" />
             )}

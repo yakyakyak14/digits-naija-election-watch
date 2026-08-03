@@ -175,7 +175,7 @@ function AccountPage() {
 
           <div className="flex flex-wrap items-center gap-2">
             {isObserver && (
-              <Badge className="gap-1 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 font-bold">
+              <Badge className="gap-1 bg-primary/20 text-primary border-primary/30 font-bold">
                 <Award className="h-3.5 w-3.5" />
                 Accredited DIGEO Observer
               </Badge>
@@ -207,10 +207,10 @@ function AccountPage() {
           <section className="space-y-6">
             {/* Deployment Card */}
             {deployment && (
-              <div className="plate space-y-4 border-emerald-500/30 bg-emerald-950/10 p-6">
+              <div className="plate space-y-4 border-primary/30 bg-primary/5 p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
-                    <Badge className="gap-1 bg-emerald-500 text-slate-950 font-bold">
+                    <Badge className="gap-1 bg-primary text-primary-foreground font-bold">
                       <MapPin className="h-3.5 w-3.5" />
                       Assigned Polling Unit
                     </Badge>
@@ -238,14 +238,14 @@ function AccountPage() {
 
                   <div>
                     <p className="text-xs font-semibold text-muted-foreground">Reporting Time</p>
-                    <p className="font-display text-sm font-semibold flex items-center gap-1.5 mt-0.5">
-                      <Calendar className="h-3.5 w-3.5 text-emerald-500" />
+                    <p className="font-display text-sm font-semibold flex items-center gap-1.5 mt-0.5 text-foreground">
+                      <Calendar className="h-3.5 w-3.5 text-primary" />
                       {new Date(deployment.reporting_time).toLocaleString()}
                     </p>
 
                     {deployment.supervisor_name && (
                       <p className="mt-2 text-xs text-muted-foreground flex items-center gap-1.5">
-                        <Phone className="h-3.5 w-3.5 text-emerald-500" />
+                        <Phone className="h-3.5 w-3.5 text-primary" />
                         Supervisor:{" "}
                         <span className="font-semibold text-foreground">
                           {deployment.supervisor_name}
