@@ -385,5 +385,7 @@ SESSION 3 — 2026-08-03 — UI Font Colors & Logo Unification
   3. Build & Type Safety Verification:
      - `bun run build` built successfully in 2.96s (client production build clean).
      - `bunx tsc --noEmit` passed cleanly with 0 type errors.
-     - Pushed commits `c97b808` and `61a8e3a` to GitHub main branch.
+     - Pushed commits `c97b808`, `61a8e3a`, `c3818ba`, and `4db263b` to GitHub main branch.
+     - Homepage scroll style removed; clean standard homepage restored and verified.
+
 
