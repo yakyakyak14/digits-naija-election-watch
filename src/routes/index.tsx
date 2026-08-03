@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DigitsMark } from "@/components/brand/DigitsLogo";
 import { LiveVideoGrid } from "@/components/video/LiveVideoGrid";
+import { ScrollWorld } from "@/components/ui/ScrollWorld";
 import { TOTAL_LGAS } from "@/lib/nigeria";
 
 export const Route = createFileRoute("/")({
@@ -204,6 +205,9 @@ function HomePage() {
 
         <LiveVideoGrid />
       </section>
+
+      {/* Interactive Scroll World Journey */}
+      <ScrollWorld />
 
       {/* Pillars */}
       <section className="border-y bg-secondary/40">
