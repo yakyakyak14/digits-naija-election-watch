@@ -44,9 +44,7 @@ export function DigitsMark({
 }
 
 /**
- * Full lockup: crest + wordmark. `tone` flips the wordmark for dark panels
- * (navy hero sections, the Control Center sidebar) where foreground would
- * disappear.
+ * Full lockup: crest + wordmark. Unified font colors across all tones.
  */
 export function DigitsLockup({
   size = 40,
@@ -65,7 +63,7 @@ export function DigitsLockup({
     tone === "light" ? "text-white" : tone === "dark" ? "text-navy-deep" : "text-foreground";
   const subTone =
     tone === "light"
-      ? "text-white/65"
+      ? "text-white/80"
       : tone === "dark"
         ? "text-navy-soft"
         : "text-muted-foreground";
@@ -75,10 +73,7 @@ export function DigitsLockup({
       <DigitsMark size={size} priority={priority} />
       <span className="flex min-w-0 flex-col leading-none">
         <span className={cn("font-display text-[1.02rem] font-extrabold tracking-tight", nameTone)}>
-          DIGITs
-          <span className="ml-1.5 font-bold text-brand-gold-deep dark:text-brand-gold">
-            Election&nbsp;Watch
-          </span>
+          DIGITs Election Watch
         </span>
         {showTagline && (
           <span

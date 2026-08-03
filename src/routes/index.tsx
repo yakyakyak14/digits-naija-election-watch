@@ -137,7 +137,7 @@ function HomePage() {
             </Badge>
 
             <h1 className="font-display text-display font-extrabold leading-[1.05] text-foreground">
-              Nigeria, watched by <span className="text-gradient-green">Nigerians</span>
+              Nigeria, watched by Nigerians
             </h1>
 
             <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
