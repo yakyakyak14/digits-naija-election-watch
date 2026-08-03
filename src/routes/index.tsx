@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DigitsMark } from "@/components/brand/DigitsLogo";
 import { LiveVideoGrid } from "@/components/video/LiveVideoGrid";
-import { ScrollWorld, type ScrollWorldSection } from "@/components/ui/ScrollWorld";
 import { TOTAL_LGAS } from "@/lib/nigeria";
 
 export const Route = createFileRoute("/")({
@@ -47,74 +46,6 @@ const NUMBERS = [
   { value: `${TOTAL_LGAS}`, label: "Local government areas", sub: "36 States & FCT" },
   { value: "1–6", label: "Live tiles on air", sub: "Operator curated feeds" },
   { value: "2 min", label: "Evidence clip cap", sub: "GPS & NIN verified" },
-];
-
-const HOMEPAGE_SCROLL_SECTIONS: ScrollWorldSection[] = [
-  {
-    id: "live-observation",
-    label: "Live Observation",
-    eyebrow: "Pillar 01 • Real-Time WebRTC",
-    title: "Nigeria's Polling Units, Watched Live",
-    body: "Watch up to 6 live split-screen observer feeds streaming directly from polling units across all 36 States and the FCT.",
-    tags: ["1-to-6 Split Screen", "Click-to-Maximize", "Low-Latency Stream"],
-    accent: "var(--primary)",
-    bgGradient: "from-primary/30 via-background/60 to-background",
-    image:
-      "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&w=1600&q=80",
-    icon: Radio,
-    cta: {
-      primary: { label: "Watch Live Grid", href: "/live" },
-    },
-  },
-  {
-    id: "iwitness-evidence",
-    label: "i-Witness Evidence",
-    eyebrow: "Pillar 02 • On-The-Spot",
-    title: "GPS & NIN Sealed Citizen Reports",
-    body: "Capture 2-minute live evidence clips with forced location checks and NIN identity hashes. Gallery attachments are blocked for a tamper-proof record.",
-    tags: ["GPS Locked", "NIN Identity", "Tamper Proof", "2-Min Max"],
-    accent: "var(--accent)",
-    bgGradient: "from-accent/25 via-background/60 to-background",
-    image:
-      "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=80",
-    icon: Camera,
-    cta: {
-      primary: { label: "File i-Witness Report", href: "/i-witness" },
-    },
-  },
-  {
-    id: "digeo-accreditation",
-    label: "DIGEO Academy",
-    eyebrow: "Pillar 03 • Accreditation",
-    title: "Certified Digital Election Observers",
-    body: "Enrol in 6 comprehensive modules covering Electoral Law, BVAS verification, and EC8A arithmetic with official digital certificates.",
-    tags: ["6 Modules", "Electoral Law", "70% Pass Mark", "QR Certificate"],
-    accent: "var(--primary)",
-    bgGradient: "from-primary/25 via-background/60 to-background",
-    image:
-      "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1600&q=80",
-    icon: GraduationCap,
-    cta: {
-      primary: { label: "Enrol in Academy", href: "/training" },
-    },
-  },
-  {
-    id: "command-audit",
-    label: "Command Audit",
-    eyebrow: "Pillar 04 • Verification",
-    title: "4-Stage Verification & Immutable Audit",
-    body: "Every report is triaged, verified by operators against polling unit checklists, and logged permanently with zero silent deletions.",
-    tags: ["Automated Triage", "Operator Verification", "Immutable Audit Trail"],
-    accent: "var(--primary)",
-    bgGradient: "from-primary/20 via-background/60 to-background",
-    image:
-      "https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=1600&q=80",
-    icon: ShieldCheck,
-    cta: {
-      primary: { label: "Learn Workflow", href: "/how-it-works" },
-      secondary: { label: "View Audit Trail", href: "/audit-log" },
-    },
-  },
 ];
 
 const PILLARS = [
@@ -273,9 +204,6 @@ function HomePage() {
 
         <LiveVideoGrid />
       </section>
-
-      {/* Interactive Scroll World Journey — Tailored for Homepage Core Pillars */}
-      <ScrollWorld sections={HOMEPAGE_SCROLL_SECTIONS} />
 
       {/* Pillars */}
       <section className="border-y bg-secondary/40">
