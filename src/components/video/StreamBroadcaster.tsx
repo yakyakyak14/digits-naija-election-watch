@@ -244,10 +244,41 @@ export function StreamBroadcaster() {
     }
   }
 
+  const isApprovedRef = useRef(isApproved);
+  const roomRefState = useRef(room);
+  useEffect(() => {
+    isApprovedRef.current = isApproved;
+  }, [isApproved]);
+  useEffect(() => {
+    roomRefState.current = room;
+  }, [room]);
+
   // Watch our own row: when an operator approves us, move to the public room.
+  // Combines Supabase Realtime with a 4-second safety polling loop so no approval
+  // event is ever missed due to WebSocket connection drops or tab switching.
   useEffect(() => {
     if (!streamId || status !== "live") return;
 
+    const syncApproval = (approved: boolean) => {
+      const targetRoom = approved ? PUBLIC_ROOM : INTAKE_ROOM;
+
+      if (approved !== isApprovedRef.current || roomRefState.current !== targetRoom) {
+        setIsApproved(approved);
+        setRoom(targetRoom);
+
+        if (approved) {
+          toast.success("Approved — moving your feed to the public grid.");
+          void connect(PUBLIC_ROOM).catch(() =>
+            toast.error("Could not switch to the public room. Retrying..."),
+          );
+        } else {
+          toast.info("Removed from the public grid; still streaming to the Command Center.");
+          void connect(INTAKE_ROOM).catch(() => undefined);
+        }
+      }
+    };
+
+    // 1. Supabase Realtime Subscription
     const channel = supabase
       .channel(`my-stream-${streamId}`)
       .on(
@@ -255,26 +286,29 @@ export function StreamBroadcaster() {
         { event: "UPDATE", schema: "public", table: "live_streams", filter: `id=eq.${streamId}` },
         (payload) => {
           const row = payload.new as { is_approved: boolean; status: string };
-          if (row.is_approved === isApproved) return;
-
-          setIsApproved(row.is_approved);
-          if (row.is_approved) {
-            toast.success("Approved — moving your feed to the public grid.");
-            void connect(PUBLIC_ROOM).catch(() =>
-              toast.error("Could not switch to the public room."),
-            );
-          } else {
-            toast.info("Removed from the public grid; still streaming to the Command Center.");
-            void connect().catch(() => undefined);
-          }
+          syncApproval(Boolean(row.is_approved));
         },
       )
       .subscribe();
 
+    // 2. Safety Polling Sync (every 4 seconds)
+    const interval = setInterval(async () => {
+      const { data } = await supabase
+        .from("live_streams")
+        .select("is_approved, status")
+        .eq("id", streamId)
+        .maybeSingle();
+
+      if (data) {
+        syncApproval(Boolean(data.is_approved));
+      }
+    }, 4000);
+
     return () => {
+      clearInterval(interval);
       void supabase.removeChannel(channel);
     };
-  }, [streamId, status, isApproved, connect]);
+  }, [streamId, status, connect]);
 
   if (!user) return null;
 

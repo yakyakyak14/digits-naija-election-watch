@@ -63,6 +63,7 @@ function LiveOpsPage() {
         // Approval moves the publisher to the public room; the broadcaster's
         // client watches this row and reconnects there.
         livekit_room: next ? "digits-live-ng" : "digits-intake-ng",
+        updated_at: new Date().toISOString(),
       })
       .eq("id", stream.id);
 
@@ -84,6 +85,7 @@ function LiveOpsPage() {
         : `${stream.observer_name} removed from the public grid.`,
     );
     qc.invalidateQueries({ queryKey: LIVE_STREAM_KEY });
+    void streamsQuery.refetch();
   }
 
   async function saveLayout() {
