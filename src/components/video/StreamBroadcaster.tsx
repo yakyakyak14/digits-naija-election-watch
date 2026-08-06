@@ -25,6 +25,7 @@ import {
   endBroadcast,
   getRoomStats,
   getStreamingStatus,
+  INTAKE_ROOM,
   mintPublisherToken,
   PUBLIC_ROOM,
 } from "@/lib/streaming";

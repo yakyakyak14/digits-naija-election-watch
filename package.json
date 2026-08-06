@@ -16,7 +16,8 @@
     "fn:deploy": "node scripts/deploy-functions.mjs",
     "seo": "node scripts/generate-seo.mjs",
     "domain": "node scripts/set-domain.mjs",
-    "livekit:check": "node scripts/check-livekit.mjs"
+    "livekit:check": "node scripts/check-livekit.mjs",
+    "dns": "node scripts/dns-records.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { SiteLayout } from "@/components/site/SiteLayout";
+import { CONTACT_EMAIL } from "@/lib/site";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,19 +101,19 @@ const CHANNELS = [
     icon: LifeBuoy,
     title: "Observer support",
     body: "Deployment questions, accreditation status, training issues, or broadcast setup assistance.",
-    email: "observers@digits.ng",
+    subject: "Observer support",
   },
   {
     icon: Newspaper,
     title: "Press & newsrooms",
     body: "Access to verified records, attribution guidance, and coverage coordination. We do not brief on predictions.",
-    email: "press@digits.ng",
+    subject: "Press enquiry",
   },
   {
     icon: Building2,
     title: "Partnerships & funding",
     body: "CSOs, election monitoring missions, and partners extending deployment coverage in specific states or LGAs.",
-    email: "partners@digits.ng",
+    subject: "Partnership",
   },
 ];
 
@@ -252,11 +253,11 @@ export function AboutAndContactPage() {
                 </Button>
               ) : (
                 <a
-                  href={`mailto:${channel.email}`}
+                  href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(channel.subject ?? "DIGITs enquiry")}`}
                   className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline"
                 >
                   <Mail className="h-3.5 w-3.5" />
-                  {channel.email}
+                  {CONTACT_EMAIL}
                 </a>
               )}
             </article>
@@ -275,11 +276,11 @@ export function AboutAndContactPage() {
           <div>
             <h3 className="font-display text-base font-bold">General Inquiries</h3>
             <a
-              href="mailto:hello@digits.ng"
+              href={`mailto:${CONTACT_EMAIL}`}
               className="mt-1 inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-primary hover:underline"
             >
               <Mail className="h-4 w-4" />
-              hello@digits.ng
+              {CONTACT_EMAIL}
             </a>
           </div>
         </div>

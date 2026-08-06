@@ -17,4 +17,4 @@ Disallow: /control-center
 Disallow: /account
 Disallow: /auth
 
-Sitemap: https://digits-election-watch.vercel.app/sitemap.xml
+Sitemap: https://digits.dpdns.org/sitemap.xml

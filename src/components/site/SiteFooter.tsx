@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { DigitsLockup } from "@/components/brand/DigitsLogo";
+import { CONTACT_EMAIL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 /** One row of essentials. Everything else lives in the nav or on its own page. */
@@ -37,6 +38,12 @@ export function SiteFooter({ className }: { className?: string }) {
               {link.label}
             </Link>
           ))}
+          <a
+            href={`mailto:${CONTACT_EMAIL}`}
+            className="text-xs text-white/60 transition-colors hover:text-white"
+          >
+            {CONTACT_EMAIL}
+          </a>
         </nav>
 
         <div className="flex flex-col items-center gap-0.5 sm:items-end">

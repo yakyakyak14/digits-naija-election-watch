@@ -30,5 +30,13 @@ export function absoluteUrl(path = "/"): string {
   return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-/** Host without scheme, for display: "digits-election-watch.vercel.app". */
+/** Host without scheme, for display: "digits.dpdns.org". */
 export const SITE_HOST = SITE_URL.replace(/^https?:\/\//, "");
+
+/**
+ * The platform's public mailbox, derived from the domain so it can never drift
+ * from where mail is actually routed. Cloudflare Email Routing delivers this to
+ * the operator's inbox; there is deliberately only ONE published address,
+ * because a role address that nobody has configured just bounces.
+ */
+export const CONTACT_EMAIL = `info@${SITE_HOST}`;
