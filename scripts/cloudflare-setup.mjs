@@ -167,17 +167,36 @@ for (const record of desired) {
 console.log(`[ok]   DNS: ${created} created, ${updated} updated, ${unchanged} already correct\n`);
 
 // --------------------------------------------------------- 3. email routing
+/*
+ * Email Routing needs permissions the DNS-only token does not carry, so probe
+ * first and say so plainly. An earlier version caught every error here and
+ * printed "already enabled", which reported success for an authentication
+ * failure — the reader had no way to tell a configured mailbox from a missing
+ * permission.
+ */
+let routingReady = false;
 try {
-  await cf(`/zones/${zone.id}/email/routing/enable`, { method: "POST" });
-  console.log("[ok]   Email Routing enabled");
+  const routing = await cf(`/zones/${zone.id}/email/routing`);
+  routingReady = Boolean(routing.enabled);
+  console.log(`[ok]   Email Routing ${routingReady ? "already enabled" : "available, enabling"}`);
+  if (!routingReady) {
+    await cf(`/zones/${zone.id}/email/routing/enable`, { method: "POST" });
+    routingReady = true;
+    console.log("[ok]   Email Routing enabled");
+  }
 } catch (err) {
-  // Already enabled is not a failure.
-  console.log(`[ok]   Email Routing already enabled (${err.message.slice(0, 60)})`);
+  const denied = /authentication|permission|denied/i.test(err.message);
+  console.log(
+    denied
+      ? "[!]    Email Routing SKIPPED — the token lacks Email Routing permission"
+      : `[!]    Email Routing SKIPPED — ${err.message}`,
+  );
 }
 
 // Destination addresses must be verified before a rule can use them.
 const accountId = zone.account?.id;
 try {
+  if (!routingReady) throw new Error("Email Routing not configured");
   const destinations = await cf(`/accounts/${accountId}/email/routing/addresses`);
   if (!destinations.some((d) => d.email === FORWARD_TO)) {
     await cf(`/accounts/${accountId}/email/routing/addresses`, {
@@ -199,6 +218,7 @@ try {
 
 const address = `info@${SITE}`;
 try {
+  if (!routingReady) throw new Error("Email Routing not configured");
   const rules = await cf(`/zones/${zone.id}/email/routing/rules`);
   const already = rules.find((r) => (r.matchers ?? []).some((m) => m.value === address));
   if (!already) {
@@ -217,6 +237,18 @@ try {
   }
 } catch (err) {
   console.log(`[!]    rule step: ${err.message}`);
+}
+
+if (!routingReady) {
+  console.log(`
+To let this script finish the mailbox, add these to the token at
+https://dash.cloudflare.com/profile/api-tokens and re-run \`npm run cf\`:
+
+    Zone    | Email Routing Rules     | Edit
+    Account | Email Routing Addresses | Edit
+
+Or do it by hand: Cloudflare -> Email -> Email Routing -> Enable, then
+create ${`info@${SITE}`} -> ${FORWARD_TO}.`);
 }
 
 console.log(`
